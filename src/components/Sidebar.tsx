@@ -1,7 +1,9 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import Logo from "../assets/denberts-logo.png";
 
 function Sidebar() {
+  const navigate = useNavigate();
+
   const mainMenu = [
     { name: "POS", path: "/pos" },
     { name: "Dashboard", path: "/dashboard" },
@@ -17,13 +19,13 @@ function Sidebar() {
     { name: "Audit Logs", path: "/audit-logs", adminOnly: true },
   ];
 
-  const settingsMenu = [
-    { name: "Account", path: "/account" },
-  ];
+  const handleLogout = () => {
+    // TODO: Clear authentication data here
+    navigate("/login");
+  };
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 h-screen w-56 bg-[#EFEABB] shadow-md">
-
       {/* Logo */}
       <div className="flex items-center justify-center p-4">
         <img
@@ -93,7 +95,7 @@ function Sidebar() {
           <NavLink
             to="/account"
             className={({ isActive }) =>
-              `block rounded-lg px-4 py-2 text-xs font-semibold ${
+              `block rounded-lg px-4 py-2 text-xs font-semibold transition ${
                 isActive
                   ? "bg-white text-gray-900 shadow-sm"
                   : "text-gray-700 hover:bg-white/60"
@@ -105,13 +107,13 @@ function Sidebar() {
 
           <button
             type="button"
-            className="w-full rounded-lg px-4 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-white/60"
+            onClick={handleLogout}
+            className="w-full rounded-lg px-4 py-2 text-left text-xs font-semibold text-gray-700 transition hover:bg-white/60"
           >
             Logout
           </button>
         </nav>
       </div>
-
     </aside>
   );
 }
