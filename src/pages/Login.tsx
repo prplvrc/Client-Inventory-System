@@ -38,14 +38,14 @@ function Login() {
       <div className="w-full max-w-sm rounded-2xl border border-[#E3DEA8]/60 bg-[#F0EBB7] p-8 shadow-xl">
         
         {/* Header */}
-        <div className="flex flex-col items-center mb-6">
+        <div className="flex flex-col items-center mb-6 -mt-2">
           <img
             src={logo}
             alt="Denbert's Logo"
-            className="h-16 w-auto object-contain mb-2"
+            className="h-16 w-auto object-contain mb-1"
           />
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-            Welcome Back
+            Login
           </h1>
           <p className="text-xs text-gray-700 mt-1">Please enter your details to sign in</p>
         </div>
