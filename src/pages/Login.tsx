@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/denberts-logo.png";
 
@@ -9,7 +9,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     console.log("Login attempt:", {
