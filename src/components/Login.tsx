@@ -47,7 +47,7 @@ function Login() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
             Login
           </h1>
-          <p className="text-xs text-gray-700 mt-1">Please enter your details to sign in</p>
+          <p className="text-xs text-gray-700 mt-1">Sign in to continue</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -57,14 +57,14 @@ function Login() {
               htmlFor="email"
               className="mb-1.5 block text-xs font-semibold text-gray-800"
             >
-              Email address
+              Email
             </label>
             <input
               type="email"
               id="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="denbert@gmail.com"
+              placeholder="denberts@gmail.com"
               autoComplete="email"
               required
               className="w-full rounded-lg border border-gray-400 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black"

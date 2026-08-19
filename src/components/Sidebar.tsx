@@ -26,12 +26,12 @@ function Sidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 h-screen w-56 bg-[#EFEABB] shadow-md">
-      {/* Logo */}
-      <div className="flex items-center justify-center p-4">
+      {/* Logo Header */}
+      <div className="flex flex-col items-center justify-center pt-5 pb-3 px-4">
         <img
           src={Logo}
           alt="Denbert's Logo"
-          className="h-10 w-10 object-contain"
+          className="h-14 w-auto object-contain"
         />
       </div>
 

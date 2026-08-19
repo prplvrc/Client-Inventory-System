@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import Sidebar from "./components/Sidebar";
-import Login from "./pages/Login";
+import Login from "./components/Login";
 
 function Dashboard() {
   return (
