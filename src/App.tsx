@@ -1,11 +1,12 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import Sidebar from "./components/Sidebar";
+import Layout from "./components/Layout";
 import Login from "./components/Login";
+import Products from "./components/Products";
 
 function Dashboard() {
   return (
-    <div className="ml-56 p-6">
+    <div className="p-6">
       <h1 className="text-2xl font-bold">Dashboard</h1>
     </div>
   );
@@ -15,25 +16,17 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Route */}
         <Route path="/login" element={<Login />} />
 
-        {/* Temporary Dashboard */}
-        <Route
-          path="/dashboard"
-          element={
-            <>
-              <Sidebar />
-              <Dashboard />
-            </>
-          }
-        />
+        {/* Authenticated App Routes */}
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/products" element={<Products />} />
+        </Route>
 
-        {/* Default Route */}
-        <Route
-          path="*"
-          element={<Navigate to="/login" replace />}
-        />
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );
