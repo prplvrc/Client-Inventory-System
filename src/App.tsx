@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import Login from "./components/Login";
 import Products from "./components/Products";
+import Inventory from "./components/Inventory";
 
 function Dashboard() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/inventory" element={<Inventory />} />
         </Route>
 
         {/* Fallback */}
