@@ -54,7 +54,7 @@ function Sidebar() {
   const managementMenu = [
     {
       name: "Recommendation",
-      path: "/recommendations",
+      path: "/recommendation",
       icon: Lightbulb,
     },
     {
