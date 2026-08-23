@@ -4,6 +4,7 @@ import Layout from "./components/Layout";
 import Login from "./components/Login";
 import Products from "./components/Products";
 import Inventory from "./components/Inventory";
+import Sales from "./components/Sales";
 
 function Dashboard() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<Products />} />
           <Route path="/inventory" element={<Inventory />} />
+          <Route path="/sales" element={<Sales />} />
         </Route>
 
         {/* Fallback */}
