@@ -6,14 +6,8 @@ import Products from "./components/Products";
 import Inventory from "./components/Inventory";
 import Sales from "./components/Sales";
 import Recommendation from "./components/Recommendation";
-
-function Dashboard() {
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-    </div>
-  );
-}
+import Forecasting from "./components/Forecasting";
+import Dashboard from "./components/Dashboard";
 
 function App() {
   return (
@@ -29,6 +23,7 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/recommendation" element={<Recommendation />} />
+          <Route path="/forecasting" element={<Forecasting />} />
         </Route>
 
         {/* Fallback */}

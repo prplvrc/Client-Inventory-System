@@ -329,7 +329,7 @@ function Inventory() {
                   ID
                 </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5">
+                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
                   Ingredient
                 </th>
 
@@ -337,11 +337,11 @@ function Inventory() {
                   Unit
                 </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-right">
+                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
                   Initial Stock
                 </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-right">
+                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
                   Available Stock
                 </th>
 

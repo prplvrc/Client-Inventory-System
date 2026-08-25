@@ -271,9 +271,9 @@ function Products() {
             <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
               <tr>
                 <th className="px-4 py-2.5 w-16 text-center border-r border-gray-200">ID</th>
-                <th className="px-4 py-2.5 border-r border-gray-200">Product</th>
-                <th className="px-4 py-2.5 border-r border-gray-200">Category</th>
-                <th className="px-4 py-2.5 text-right border-r border-gray-200">Price</th>
+                <th className="px-4 py-2.5 text-center border-r border-gray-200">Product</th>
+                <th className="px-4 py-2.5 text-center border-r border-gray-200">Category</th>
+                <th className="px-4 py-2.5 text-center border-r border-gray-200">Price</th>
                 <th className="px-4 py-2.5 text-center border-r border-gray-200">Status</th>
                 <th className="px-4 py-2.5 text-center border-r border-gray-200">BOM</th>
                 <th className="px-4 py-2.5 text-center">Actions</th>
