@@ -8,6 +8,7 @@ import Sales from "./components/Sales";
 import Recommendation from "./components/Recommendation";
 import Forecasting from "./components/Forecasting";
 import Dashboard from "./components/Dashboard";
+import PoS from "./components/Pos";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
 
         {/* Authenticated App Routes */}
         <Route element={<Layout />}>
+          <Route path="/pos" element={<PoS />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<Products />} />
           <Route path="/inventory" element={<Inventory />} />
