@@ -8,7 +8,7 @@ import Sales from "./components/Sales";
 import Recommendation from "./components/Recommendation";
 import Forecasting from "./components/Forecasting";
 import Dashboard from "./components/Dashboard";
-import PoS from "./components/Pos";
+import PoS from "./components/PoS";
 
 function App() {
   return (

@@ -400,10 +400,10 @@ function POS() {
             </div>
 
             {/* CART ITEMS */}
-            <div className="max-h-[400px] overflow-y-auto p-4">
+            <div className="max-h-100 overflow-y-auto p-4">
 
               {cart.length === 0 ? (
-                <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
+                <div className="flex min-h-50 flex-col items-center justify-center text-center">
                   <ShoppingCart
                     size={32}
                     className="mb-3 text-gray-300"
