@@ -37,7 +37,7 @@ function Sidebar() {
     navigate("/login");
   };
 
-  const navItemClass = ({ isActive }) =>
+  const navItemClass = ({ isActive }: { isActive: boolean }) =>
     `group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all duration-150 ${
       isActive
         ? "bg-white text-red-600 shadow-sm border-l-4 border-red-600"
