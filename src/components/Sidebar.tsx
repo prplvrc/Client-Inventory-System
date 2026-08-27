@@ -7,7 +7,6 @@ import {
   TrendingUp,
   LineChart,
   Lightbulb,
-  Users,
   ShieldAlert,
   Settings,
   LogOut,
@@ -29,7 +28,6 @@ function Sidebar() {
 
   const managementMenu = [
     { name: "Recommendation", path: "/recommendation", icon: Lightbulb },
-    { name: "Employees", path: "/employees", icon: Users, adminOnly: true },
     { name: "Audit Logs", path: "/audit-logs", icon: ShieldAlert, adminOnly: true },
   ];
 

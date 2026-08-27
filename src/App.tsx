@@ -9,6 +9,7 @@ import Recommendation from "./components/Recommendation";
 import Forecasting from "./components/Forecasting";
 import Dashboard from "./components/Dashboard";
 import PoS from "./components/PoS";
+import AuditLogs from "./components/AuditLogs";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/sales" element={<Sales />} />
           <Route path="/recommendation" element={<Recommendation />} />
           <Route path="/forecasting" element={<Forecasting />} />
+          <Route path="/audit-logs" element={<AuditLogs />} />
         </Route>
 
         {/* Fallback */}
