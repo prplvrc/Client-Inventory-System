@@ -47,15 +47,12 @@ function Account() {
       });
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch account: ${response.status}`
-        );
+        throw new Error(`Failed to fetch account: ${response.status}`);
       }
 
       const result: AccountData = await response.json();
 
       setAccount(result);
-
       setName(result.name ?? "");
       setEmail(result.email ?? "");
       setUsername(result.username ?? "");
@@ -87,23 +84,16 @@ function Account() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name,
-          email,
-          username,
-        }),
+        body: JSON.stringify({ name, email, username }),
       });
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to update account: ${response.status}`
-        );
+        throw new Error(`Failed to update account: ${response.status}`);
       }
 
       const result: AccountData = await response.json();
 
       setAccount(result);
-
       setName(result.name ?? "");
       setEmail(result.email ?? "");
       setUsername(result.username ?? "");
@@ -151,16 +141,11 @@ function Account() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
+        body: JSON.stringify({ currentPassword, newPassword }),
       });
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to change password: ${response.status}`
-        );
+        throw new Error(`Failed to change password: ${response.status}`);
       }
 
       setCurrentPassword("");
@@ -200,120 +185,104 @@ function Account() {
           <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
             Account
           </h1>
-
           <p className="text-xs text-gray-500">
             Manage your account information and security settings
           </p>
         </div>
       </div>
 
-      {/* ERROR */}
+      {/* ALERTS */}
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50/60 p-3 text-xs text-red-800">
           {error}
         </div>
       )}
 
-      {/* SUCCESS */}
       {success && (
-        <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-xs text-green-700">
+        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-800">
           {success}
         </div>
       )}
 
       {loading ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-12 text-center text-xs text-gray-500 shadow-sm">
+        <div className="flex h-40 items-center justify-center rounded-lg border border-gray-200 bg-white text-xs text-gray-500 shadow-sm">
           Loading account information...
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {/* PROFILE INFORMATION */}
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 bg-gray-100/70 px-5 py-3">
-              <div className="flex items-center gap-2">
-                <User size={15} className="text-gray-600" />
-
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-800">
-                  Profile Information
-                </h2>
-              </div>
-
-              <p className="mt-1 text-[11px] text-gray-500">
-                Update your personal account information.
-              </p>
+          <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
+              <User size={15} className="text-gray-500" />
+              <span>Profile Information</span>
             </div>
 
-            <div className="space-y-4 p-5">
+            <div className="space-y-4 p-4">
               {/* Name */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Name
                 </label>
-
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your name"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                 />
               </div>
 
               {/* Username */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Username
                 </label>
-
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter username"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                 />
               </div>
 
               {/* Email */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Email
                 </label>
-
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                 />
               </div>
 
               {/* Role */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Role
                 </label>
-
                 <input
                   type="text"
                   value={account?.role ?? ""}
                   disabled
-                  className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-xs text-gray-500"
+                  className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-100 px-3 py-1.5 text-xs text-gray-500"
                 />
               </div>
 
               {/* Status */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Account Status
                 </label>
-
                 <div>
                   <span
-                    className={`inline-block rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
                       account?.status?.toLowerCase() === "active"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-emerald-100 text-emerald-800"
                         : "bg-gray-100 text-gray-800"
                     }`}
                   >
@@ -322,14 +291,14 @@ function Account() {
                 </div>
               </div>
 
-              {/* Buttons */}
-              <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-4">
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100"
+                  className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
                 >
-                  <RefreshCw size={12} />
+                  <RefreshCw size={13} />
                   Reset
                 </button>
 
@@ -337,106 +306,85 @@ function Account() {
                   type="button"
                   onClick={handleSaveProfile}
                   disabled={saving}
-                  className="flex items-center gap-1.5 rounded-md border border-[#d6d09b] bg-[#EFEABB] px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-sm transition hover:bg-[#e3dc9e] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-md border border-amber-200/60 bg-[#EFEABB] px-3.5 py-1.5 text-xs font-semibold text-gray-900 shadow-sm transition hover:bg-[#e3dc9e] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Save size={13} />
-
                   {saving ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* PASSWORD */}
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-200 bg-gray-100/70 px-5 py-3">
-              <div className="flex items-center gap-2">
-                <Lock size={15} className="text-gray-600" />
-
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-800">
-                  Change Password
-                </h2>
-              </div>
-
-              <p className="mt-1 text-[11px] text-gray-500">
-                Update your password to keep your account secure.
-              </p>
+          {/* CHANGE PASSWORD */}
+          <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
+              <Lock size={15} className="text-gray-500" />
+              <span>Change Password</span>
             </div>
 
-            <div className="space-y-4 p-5">
+            <div className="space-y-4 p-4">
               {/* Current Password */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Current Password
                 </label>
-
                 <input
                   type="password"
                   value={currentPassword}
-                  onChange={(e) =>
-                    setCurrentPassword(e.target.value)
-                  }
+                  onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Enter current password"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                 />
               </div>
 
               {/* New Password */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   New Password
                 </label>
-
                 <input
                   type="password"
                   value={newPassword}
-                  onChange={(e) =>
-                    setNewPassword(e.target.value)
-                  }
+                  onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                 />
               </div>
 
               {/* Confirm Password */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-medium text-gray-700">
                   Confirm New Password
                 </label>
-
                 <input
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) =>
-                    setConfirmPassword(e.target.value)
-                  }
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                 />
               </div>
 
-              <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
-                <p className="text-[11px] leading-5 text-gray-500">
-                  For security, use a password with at least 8
-                  characters.
+              <div className="rounded-md border border-gray-200 bg-gray-50/50 p-2.5">
+                <p className="text-[11px] leading-relaxed text-gray-500">
+                  For security, use a password with at least 8 characters.
                 </p>
               </div>
 
-              {/* Button */}
-              <div className="flex justify-end border-t border-gray-200 pt-4">
+              {/* Action */}
+              <div className="flex justify-end border-t border-gray-100 pt-3">
                 <button
                   type="button"
                   onClick={handleChangePassword}
                   disabled={saving}
-                  className="flex items-center gap-1.5 rounded-md border border-[#d6d09b] bg-[#EFEABB] px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-sm transition hover:bg-[#e3dc9e] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-md border border-amber-200/60 bg-[#EFEABB] px-3.5 py-1.5 text-xs font-semibold text-gray-900 shadow-sm transition hover:bg-[#e3dc9e] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Lock size={13} />
-
                   {saving ? "Updating..." : "Change Password"}
                 </button>
               </div>
             </div>
-          </div>
+          </section>
         </div>
       )}
     </div>
