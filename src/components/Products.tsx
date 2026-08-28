@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import ProductForm from "./ProductForm";
+import { TableSkeleton } from "./LoadingSkeleton";
 
 interface Product {
   id: number;
@@ -282,11 +283,7 @@ function Products() {
 
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-500">
-                    Loading products...
-                  </td>
-                </tr>
+                <TableSkeleton columns={7} />
               ) : products.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-gray-500">

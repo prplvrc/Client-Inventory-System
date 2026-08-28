@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   Info,
-  CheckCircle2,
-  Package,
-  Layers,
-  Sparkles,
 } from "lucide-react";
+import { Skeleton, TableSkeleton } from "./LoadingSkeleton";
 
 interface ResourcePlanning {
   message: string;
@@ -65,20 +62,24 @@ function Recommendation() {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/recommendations`
-        );
+        const API_URL = import.meta.env.VITE_API_URL;
+
+        if (!API_URL) {
+          throw new Error("VITE_API_URL is not configured.");
+        }
+
+        const response = await fetch(`${API_URL}/api/recommendations`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch recommendations.");
         }
 
         const data: RecommendationData = await response.json();
-
         setRecommendations(data);
-      } catch (error) {
-        console.error("Error fetching recommendations:", error);
+      } catch (err) {
+        console.error("Error fetching recommendations:", err);
         setError("Unable to load recommendations.");
+        setRecommendations(null);
       } finally {
         setLoading(false);
       }
@@ -137,9 +138,7 @@ function Recommendation() {
 
           <div className="p-4">
             {loading ? (
-              <div className="flex h-44 items-center justify-center text-xs text-gray-500">
-                Loading resource planning...
-              </div>
+              <ResourcePlanningSkeleton />
             ) : recommendations?.resourcePlanning?.length ? (
               <div className="space-y-2.5">
                 {recommendations.resourcePlanning.map((item, index) => (
@@ -168,9 +167,7 @@ function Recommendation() {
 
           <div className="p-4">
             {loading ? (
-              <div className="flex h-44 items-center justify-center text-xs text-gray-500">
-                Loading alerts...
-              </div>
+              <AlertsSkeleton />
             ) : recommendations?.alerts?.length ? (
               <div className="space-y-2.5">
                 {recommendations.alerts.map((alert) => (
@@ -231,11 +228,7 @@ function Recommendation() {
 
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr>
-                  <td colSpan={4} className="py-12 text-center text-xs text-gray-500">
-                    Loading restocking recommendations...
-                  </td>
-                </tr>
+                <TableSkeleton columns={4} rows={4} />
               ) : recommendations?.restocking?.length ? (
                 recommendations.restocking.map((item) => (
                   <tr key={item.id} className="transition hover:bg-gray-50/80">
@@ -286,11 +279,7 @@ function Recommendation() {
 
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr>
-                  <td colSpan={3} className="py-12 text-center text-xs text-gray-500">
-                    Loading preparation recommendations...
-                  </td>
-                </tr>
+                <TableSkeleton columns={3} rows={4} />
               ) : recommendations?.preparation?.length ? (
                 recommendations.preparation.map((item) => (
                   <tr key={item.id} className="transition hover:bg-gray-50/80">
@@ -318,6 +307,34 @@ function Recommendation() {
           </table>
         </div>
       </section>
+    </div>
+  );
+}
+
+function ResourcePlanningSkeleton() {
+  return (
+    <div className="space-y-2.5" role="status">
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className="flex items-start gap-2.5 rounded-md border border-gray-100 bg-gray-50/70 p-3">
+          <Skeleton className="mt-0.5 h-4 w-4 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2"><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-3/4" /></div>
+        </div>
+      ))}
+      <span className="sr-only">Loading resource planning recommendations...</span>
+    </div>
+  );
+}
+
+function AlertsSkeleton() {
+  return (
+    <div className="space-y-2.5" role="status">
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className="flex items-start justify-between gap-3 rounded-md border border-gray-100 bg-gray-50/70 p-3">
+          <div className="flex flex-1 items-start gap-2"><Skeleton className="mt-0.5 h-4 w-4 shrink-0 rounded-full" /><div className="flex-1 space-y-2"><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-2/3" /></div></div>
+          <Skeleton className="h-4 w-10 shrink-0 rounded-full" />
+        </div>
+      ))}
+      <span className="sr-only">Loading alerts...</span>
     </div>
   );
 }

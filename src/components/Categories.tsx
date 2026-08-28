@@ -7,6 +7,7 @@ import {
   Search,
 } from "lucide-react";
 import CategoryForm from "./CategoryForm";
+import { TableSkeleton } from "./LoadingSkeleton";
 
 interface Category {
   id: number;
@@ -251,14 +252,7 @@ function Categories() {
 
               {/* LOADING */}
               {loading ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="py-12 text-center text-gray-500"
-                  >
-                    Loading categories...
-                  </td>
-                </tr>
+                <TableSkeleton columns={5} />
 
               ) : filteredCategories.length === 0 ? (
 

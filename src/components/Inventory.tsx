@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import InventoryForm from "./InventoryForm";
+import { TableSkeleton } from "./LoadingSkeleton";
 
 interface InventoryItem {
   id: number;
@@ -357,14 +358,7 @@ function Inventory() {
 
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="py-12 text-center text-gray-500"
-                  >
-                    Loading inventory...
-                  </td>
-                </tr>
+                <TableSkeleton columns={7} />
               ) : inventory.length === 0 ? (
                 <tr>
                   <td

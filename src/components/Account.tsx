@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { User, Lock, Save, RefreshCw } from "lucide-react";
+import { Skeleton } from "./LoadingSkeleton";
 
 interface AccountData {
   id: number;
@@ -205,8 +206,9 @@ function Account() {
       )}
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center rounded-lg border border-gray-200 bg-white text-xs text-gray-500 shadow-sm">
-          Loading account information...
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <ProfileInformationSkeleton />
+          <ChangePasswordSkeleton />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -388,6 +390,44 @@ function Account() {
         </div>
       )}
     </div>
+  );
+}
+
+function ProfileInformationSkeleton() {
+  return (
+    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" role="status">
+      <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
+        <User size={15} className="text-gray-400" />
+        <span>Profile Information</span>
+      </div>
+      <div className="space-y-4 p-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div key={index}><Skeleton className="mb-1 h-3 w-20" /><Skeleton className="h-8 w-full rounded-md" /></div>
+        ))}
+        <div><Skeleton className="mb-1 h-3 w-24" /><Skeleton className="h-4 w-14 rounded-full" /></div>
+        <div className="flex justify-end gap-2 border-t border-gray-100 pt-3"><Skeleton className="h-7 w-14 rounded-md" /><Skeleton className="h-7 w-24 rounded-md" /></div>
+      </div>
+      <span className="sr-only">Loading profile information...</span>
+    </section>
+  );
+}
+
+function ChangePasswordSkeleton() {
+  return (
+    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" role="status">
+      <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
+        <Lock size={15} className="text-gray-400" />
+        <span>Change Password</span>
+      </div>
+      <div className="space-y-4 p-4">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index}><Skeleton className="mb-1 h-3 w-28" /><Skeleton className="h-8 w-full rounded-md" /></div>
+        ))}
+        <div className="rounded-md border border-gray-100 bg-gray-50/70 p-2.5"><Skeleton className="h-3 w-full" /></div>
+        <div className="flex justify-end border-t border-gray-100 pt-3"><Skeleton className="h-7 w-28 rounded-md" /></div>
+      </div>
+      <span className="sr-only">Loading security settings...</span>
+    </section>
   );
 }
 

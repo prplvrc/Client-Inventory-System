@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { X, Receipt, Calendar, Clock, User, CreditCard } from "lucide-react";
+import { CardSkeleton } from "./LoadingSkeleton";
 
 interface TransactionItem {
   id: number;
@@ -101,8 +102,9 @@ function TransactionDetailsModal({
         {/* MODAL CONTENT */}
         <div className="p-5">
           {loading ? (
-            <div className="flex h-64 items-center justify-center text-xs font-medium text-gray-400">
-              Loading transaction details...
+            <div className="space-y-5">
+              <CardSkeleton lines={3} />
+              <CardSkeleton lines={5} />
             </div>
           ) : error ? (
             <div className="flex h-64 items-center justify-center text-xs text-red-500">
