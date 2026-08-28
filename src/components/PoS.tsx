@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
   ShoppingCart,
@@ -7,6 +7,7 @@ import {
   Trash2,
   RefreshCw,
 } from "lucide-react";
+import { Skeleton } from "./LoadingSkeleton";
 
 interface Product {
   id: number;
@@ -42,7 +43,7 @@ function POS() {
   const [dateTime, setDateTime] = useState(new Date());
 
   // Fetch products from database
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -54,7 +55,6 @@ function POS() {
       }
 
       const params = new URLSearchParams();
-
       params.append("page", "1");
       params.append("limit", "100");
 
@@ -66,28 +66,22 @@ function POS() {
         params.append("category", category.trim());
       }
 
-      const response = await fetch(
-        `${apiUrl}/products?${params.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${apiUrl}/products?${params.toString()}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch products: ${response.status}`
-        );
+        throw new Error(`Failed to fetch products: ${response.status}`);
       }
 
       const result: ProductResponse = await response.json();
 
       // Only show active products in POS
       const activeProducts = (result.data ?? []).filter(
-        (product) =>
-          product.status?.toLowerCase() === "active"
+        (product) => product.status?.toLowerCase() === "active"
       );
 
       setProducts(activeProducts);
@@ -98,7 +92,7 @@ function POS() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, category]);
 
   // Real-time clock
   useEffect(() => {
@@ -116,9 +110,9 @@ function POS() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [search, category]);
+  }, [fetchProducts]);
 
-  // Get unique categories from products
+  // Get unique categories dynamically from loaded products
   const categories = useMemo(() => {
     return Array.from(
       new Set(
@@ -132,9 +126,7 @@ function POS() {
   // Add product to cart
   const addToCart = (product: Product) => {
     setCart((currentCart) => {
-      const existingItem = currentCart.find(
-        (item) => item.id === product.id
-      );
+      const existingItem = currentCart.find((item) => item.id === product.id);
 
       if (existingItem) {
         return currentCart.map((item) =>
@@ -189,25 +181,19 @@ function POS() {
 
   // Remove item from cart
   const removeFromCart = (id: number) => {
-    setCart((currentCart) =>
-      currentCart.filter((item) => item.id !== id)
-    );
+    setCart((currentCart) => currentCart.filter((item) => item.id !== id));
   };
 
   // Calculate subtotal
   const subtotal = useMemo(() => {
     return cart.reduce(
-      (total, item) =>
-        total + Number(item.price) * item.quantity,
+      (total, item) => total + Number(item.price) * item.quantity,
       0
     );
   }, [cart]);
 
   const totalItems = useMemo(() => {
-    return cart.reduce(
-      (total, item) => total + item.quantity,
-      0
-    );
+    return cart.reduce((total, item) => total + item.quantity, 0);
   }, [cart]);
 
   // Reset search and category
@@ -218,7 +204,6 @@ function POS() {
 
   return (
     <div className="w-full p-4 sm:p-6">
-
       {/* HEADER */}
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -259,13 +244,10 @@ function POS() {
 
       {/* MAIN POS LAYOUT */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-
         {/* PRODUCTS */}
         <div className="lg:col-span-2">
-
           {/* SEARCH + FILTER */}
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-
             {/* SEARCH */}
             <div className="relative flex-1">
               <Search
@@ -310,9 +292,7 @@ function POS() {
 
           {/* PRODUCT HEADER */}
           <div className="mb-3">
-            <h2 className="text-sm font-semibold text-gray-900">
-              Products
-            </h2>
+            <h2 className="text-sm font-semibold text-gray-900">Products</h2>
 
             <p className="text-[11px] text-gray-500">
               Select a product to add it to the order.
@@ -321,8 +301,10 @@ function POS() {
 
           {/* PRODUCT LIST */}
           {loading ? (
-            <div className="rounded-lg border border-gray-200 bg-white py-12 text-center text-xs text-gray-500 shadow-sm">
-              Loading products...
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }, (_, index) => (
+                <ProductCardSkeleton key={index} />
+              ))}
             </div>
           ) : products.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-white py-12 text-center text-xs text-gray-500 shadow-sm">
@@ -330,7 +312,6 @@ function POS() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-
               {products.map((product) => (
                 <div
                   key={product.id}
@@ -370,23 +351,17 @@ function POS() {
                   </div>
                 </div>
               ))}
-
             </div>
           )}
         </div>
 
         {/* SHOPPING CART */}
         <div className="lg:col-span-1">
-
           <div className="sticky top-4 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-
             {/* CART HEADER */}
             <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100/70 px-4 py-3">
               <div className="flex items-center gap-2">
-                <ShoppingCart
-                  size={15}
-                  className="text-gray-600"
-                />
+                <ShoppingCart size={15} className="text-gray-600" />
 
                 <h2 className="text-sm font-semibold text-gray-900">
                   Shopping Cart
@@ -394,20 +369,15 @@ function POS() {
               </div>
 
               <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
-                {totalItems}{" "}
-                {totalItems === 1 ? "Item" : "Items"}
+                {totalItems} {totalItems === 1 ? "Item" : "Items"}
               </span>
             </div>
 
             {/* CART ITEMS */}
             <div className="max-h-100 overflow-y-auto p-4">
-
               {cart.length === 0 ? (
                 <div className="flex min-h-50 flex-col items-center justify-center text-center">
-                  <ShoppingCart
-                    size={32}
-                    className="mb-3 text-gray-300"
-                  />
+                  <ShoppingCart size={32} className="mb-3 text-gray-300" />
 
                   <p className="text-xs font-medium text-gray-500">
                     Your cart is empty
@@ -419,16 +389,13 @@ function POS() {
                 </div>
               ) : (
                 <div className="space-y-4">
-
                   {cart.map((item) => (
                     <div
                       key={item.id}
                       className="border-b border-gray-200 pb-4"
                     >
-
                       {/* ITEM NAME + DELETE */}
                       <div className="flex items-start justify-between gap-2">
-
                         <div>
                           <h3 className="text-xs font-semibold text-gray-900">
                             {item.product}
@@ -441,26 +408,19 @@ function POS() {
 
                         <button
                           type="button"
-                          onClick={() =>
-                            removeFromCart(item.id)
-                          }
+                          onClick={() => removeFromCart(item.id)}
                           className="rounded p-1 text-gray-400 transition hover:bg-rose-50 hover:text-rose-600"
                         >
                           <Trash2 size={13} />
                         </button>
-
                       </div>
 
                       {/* QUANTITY + TOTAL */}
                       <div className="mt-3 flex items-center justify-between">
-
                         <div className="flex items-center gap-2">
-
                           <button
                             type="button"
-                            onClick={() =>
-                              decreaseQuantity(item.id)
-                            }
+                            onClick={() => decreaseQuantity(item.id)}
                             className="rounded border border-gray-300 bg-white p-1 hover:bg-gray-50"
                           >
                             <Minus size={11} />
@@ -472,42 +432,29 @@ function POS() {
 
                           <button
                             type="button"
-                            onClick={() =>
-                              increaseQuantity(item.id)
-                            }
+                            onClick={() => increaseQuantity(item.id)}
                             className="rounded border border-gray-300 bg-white p-1 hover:bg-gray-50"
                           >
                             <Plus size={11} />
                           </button>
-
                         </div>
 
                         <span className="text-xs font-bold text-gray-900">
-                          ₱
-                          {(
-                            Number(item.price) *
-                            item.quantity
-                          ).toFixed(2)}
+                          ₱{(Number(item.price) * item.quantity).toFixed(2)}
                         </span>
-
                       </div>
                     </div>
                   ))}
-
                 </div>
               )}
-
             </div>
 
             {/* CART SUMMARY */}
             <div className="border-t border-gray-200 bg-gray-50 p-4">
-
               <div className="flex justify-between text-xs text-gray-600">
                 <span>Subtotal</span>
 
-                <span>
-                  ₱{subtotal.toFixed(2)}
-                </span>
+                <span>₱{subtotal.toFixed(2)}</span>
               </div>
 
               <div className="mt-2 flex justify-between text-xs text-gray-600">
@@ -517,9 +464,7 @@ function POS() {
               </div>
 
               <div className="mt-3 flex justify-between border-t border-gray-200 pt-3">
-                <span className="text-sm font-bold text-gray-900">
-                  Total
-                </span>
+                <span className="text-sm font-bold text-gray-900">Total</span>
 
                 <span className="text-sm font-bold text-gray-900">
                   ₱{subtotal.toFixed(2)}
@@ -533,12 +478,28 @@ function POS() {
               >
                 Proceed to Payment
               </button>
-
             </div>
           </div>
         </div>
-
       </div>
+    </div>
+  );
+}
+
+function ProductCardSkeleton() {
+  return (
+    <div
+      className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+      role="status"
+    >
+      <Skeleton className="h-5 w-18 rounded-full" />
+      <Skeleton className="mt-4 h-4 w-4/5" />
+      <Skeleton className="mt-2 h-2.5 w-12" />
+      <div className="mt-4 flex items-center justify-between">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-7 w-15" />
+      </div>
+      <span className="sr-only">Loading product...</span>
     </div>
   );
 }

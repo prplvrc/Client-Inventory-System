@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { SlidersHorizontal, Package } from "lucide-react";
+import { TableSkeleton } from "./LoadingSkeleton";
 
 interface ForecastSummary {
   period: string;
@@ -55,6 +56,10 @@ function Forecasting() {
 
         const API_URL = import.meta.env.VITE_API_URL;
 
+        if (!API_URL) {
+          throw new Error("VITE_API_URL is not configured.");
+        }
+
         const response = await fetch(
           `${API_URL}/api/forecast?period=${period}&product=${product}`
         );
@@ -64,7 +69,6 @@ function Forecasting() {
         }
 
         const result: ForecastResponse = await response.json();
-
         setData(result);
       } catch (err) {
         console.error("Forecast fetch error:", err);
@@ -166,9 +170,7 @@ function Forecasting() {
 
           <div className="min-h-[280px] overflow-x-auto">
             {loading ? (
-              <div className="flex h-64 items-center justify-center text-xs text-gray-500">
-                Loading forecast...
-              </div>
+              <ForecastSummarySkeleton />
             ) : data?.summary?.length ? (
               <table className="w-full text-left text-xs text-gray-700 border-collapse">
                 <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
@@ -211,7 +213,7 @@ function Forecasting() {
 
           <div className="min-h-[280px] p-4 flex items-center justify-center">
             {loading ? (
-              <div className="text-xs text-gray-500">Loading historical sales...</div>
+              <HistoricalSalesChartSkeleton />
             ) : data?.historicalSales?.length ? (
               <SalesChart data={data.historicalSales} />
             ) : (
@@ -237,11 +239,7 @@ function Forecasting() {
 
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500">
-                    Loading forecast...
-                  </td>
-                </tr>
+                <TableSkeleton columns={5} rows={4} />
               ) : data?.products?.length ? (
                 data.products.map((item) => (
                   <tr key={item.product} className="transition hover:bg-gray-50/80">
@@ -273,6 +271,38 @@ function Forecasting() {
           </table>
         </div>
       </section>
+    </div>
+  );
+}
+
+function ForecastSummarySkeleton() {
+  return (
+    <table className="w-full border-collapse text-left text-xs text-gray-700" aria-label="Loading forecast summary">
+      <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
+        <tr>
+          <th className="border-r border-gray-200 px-4 py-2.5">Period</th>
+          <th className="border-r border-gray-200 px-4 py-2.5 text-right">Sales</th>
+          <th className="px-4 py-2.5 text-right">Forecasted Demand</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-200"><TableSkeleton columns={3} rows={7} /></tbody>
+    </table>
+  );
+}
+
+function HistoricalSalesChartSkeleton() {
+  const points = [82, 64, 70, 48, 27, 15, 32];
+
+  return (
+    <div className="h-full w-full overflow-x-auto" role="status">
+      <svg viewBox="0 0 500 210" className="h-[220px] w-full min-w-[380px]" aria-hidden="true">
+        <line x1="45" y1="10" x2="45" y2="175" className="stroke-gray-200" />
+        <line x1="45" y1="175" x2="485" y2="175" className="stroke-gray-200" />
+        {[40, 80, 120, 160].map((y) => <line key={y} x1="45" y1={y} x2="485" y2={y} className="stroke-gray-100" />)}
+        <polyline points={points.map((y, index) => `${45 + index * (440 / 6)},${y}`).join(" ")} fill="none" stroke="#d1d5db" strokeWidth="3" className="animate-pulse" />
+        {points.map((y, index) => <circle key={index} cx={45 + index * (440 / 6)} cy={y} r="4" className="fill-gray-200 animate-pulse" />)}
+      </svg>
+      <span className="sr-only">Loading historical sales chart...</span>
     </div>
   );
 }

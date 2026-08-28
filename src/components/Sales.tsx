@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   SlidersHorizontal,
   Search,
@@ -8,6 +8,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import TransactionDetailsModal from "../components/TransactionDetailsModal";
+import { TableSkeleton } from "./LoadingSkeleton";
 
 interface SaleRecord {
   id: number;
@@ -81,7 +82,7 @@ function Sales() {
   }, [search, cashierFilter]);
 
   // Fetch Sales Data from API
-  const fetchSales = async () => {
+  const fetchSales = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -131,11 +132,11 @@ function Sales() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch, debouncedCashier, startDate, endDate, page]);
 
   useEffect(() => {
     fetchSales();
-  }, [page, debouncedSearch, debouncedCashier, startDate, endDate]);
+  }, [fetchSales]);
 
   const handleReset = () => {
     setSearch("");
@@ -307,11 +308,7 @@ function Sales() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-500">
-                    Loading sales records...
-                  </td>
-                </tr>
+                <TableSkeleton columns={7} />
               ) : sales.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-gray-500">

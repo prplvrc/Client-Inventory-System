@@ -4,6 +4,7 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react";
+import { TableSkeleton } from "./LoadingSkeleton";
 
 interface AuditLogItem {
   id: number;
@@ -297,14 +298,7 @@ function AuditLog() {
 
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="py-12 text-center text-gray-500"
-                  >
-                    Loading audit logs...
-                  </td>
-                </tr>
+                <TableSkeleton columns={5} />
               ) : auditLogs.length === 0 ? (
                 <tr>
                   <td

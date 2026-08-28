@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { Skeleton } from "./LoadingSkeleton";
 import {
   AlertTriangle,
-  Lightbulb,
   Info,
   TrendingUp,
   Receipt,
@@ -98,7 +98,7 @@ function Dashboard() {
         setDashboard(result);
       } catch (err) {
         console.error("Fetch dashboard error:", err);
-        setError("Unable to load dashboard data.");
+        setError("Unable to load dashboard data. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -216,9 +216,7 @@ function Dashboard() {
 
           <div className="p-4">
             {loading ? (
-              <div className="flex h-[200px] items-center justify-center text-xs text-gray-500">
-                Loading sales overview...
-              </div>
+              <SalesOverviewSkeleton />
             ) : (
               <SalesOverviewChart data={dashboard?.salesOverview ?? []} />
             )}
@@ -234,11 +232,9 @@ function Dashboard() {
             Inventory Alerts
           </div>
 
-          <div className="p-4 min-h-[230px]">
+          <div className="p-4 min-h-57.5">
             {loading ? (
-              <div className="flex h-44 items-center justify-center text-xs text-gray-500">
-                Loading alerts...
-              </div>
+              <InventoryAlertsSkeleton />
             ) : dashboard?.inventoryAlerts?.length ? (
               <div className="space-y-2.5">
                 {dashboard.inventoryAlerts.map((item) => (
@@ -274,9 +270,9 @@ function Dashboard() {
             Top Selling Products
           </div>
 
-          <div className="p-4 min-h-[230px] flex items-center justify-center">
+          <div className="p-4 min-h-57.5 flex items-center justify-center">
             {loading ? (
-              <div className="text-xs text-gray-500">Loading top products...</div>
+              <TopProductsSkeleton />
             ) : (
               <TopProductsChart data={dashboard?.topSellingProducts ?? []} />
             )}
@@ -294,9 +290,7 @@ function Dashboard() {
 
           <div className="p-4">
             {loading ? (
-              <div className="flex h-20 items-center justify-center text-xs text-gray-500">
-                Loading recommendations...
-              </div>
+              <RecommendationsSkeleton />
             ) : dashboard?.recommendations?.length ? (
               <div className="space-y-2.5">
                 {dashboard.recommendations.map((item) => (
@@ -352,7 +346,14 @@ function MetricCard({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       {loading ? (
-        <div className="h-16 animate-pulse rounded bg-gray-100" />
+        <div className="flex items-center justify-between" aria-label="Loading metric" role="status">
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <span className="sr-only">Loading metric...</span>
+        </div>
       ) : (
         <div className="flex items-center justify-between">
           <div>
@@ -370,6 +371,60 @@ function MetricCard({
           {icon && <div className="rounded-full bg-gray-50 p-2.5 border border-gray-100">{icon}</div>}
         </div>
       )}
+    </div>
+  );
+}
+
+function SalesOverviewSkeleton() {
+  const heights = [35, 52, 43, 66, 78, 91, 60];
+
+  return (
+    <div className="flex h-50 items-end gap-3 border-b border-l border-gray-100 px-3 pb-6 pt-3" role="status">
+      {heights.map((height, index) => (
+        <Skeleton key={index} className="flex-1 rounded-b-none" style={{ height: `${height}%` }} />
+      ))}
+      <span className="sr-only">Loading sales overview chart...</span>
+    </div>
+  );
+}
+
+function InventoryAlertsSkeleton() {
+  return (
+    <div className="space-y-2.5" role="status">
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className="flex items-center justify-between rounded-md border border-gray-100 bg-gray-50/70 p-2.5">
+          <div className="flex items-center gap-2"><Skeleton className="h-3.5 w-3.5 rounded-full" /><Skeleton className="h-3 w-20" /></div>
+          <Skeleton className="h-3 w-9" />
+        </div>
+      ))}
+      <span className="sr-only">Loading inventory alerts...</span>
+    </div>
+  );
+}
+
+function TopProductsSkeleton() {
+  return (
+    <div className="flex h-45 items-center justify-center" role="status">
+      <div
+        aria-hidden="true"
+        className="h-37.5 w-37.5 animate-pulse rounded-full"
+        style={{ background: "conic-gradient(#d1d5db 0deg 105deg, #e5e7eb 105deg 180deg, #cbd5e1 180deg 245deg, #e5e7eb 245deg 305deg, #d1d5db 305deg 360deg)" }}
+      />
+      <span className="sr-only">Loading top products chart...</span>
+    </div>
+  );
+}
+
+function RecommendationsSkeleton() {
+  return (
+    <div className="space-y-2.5" role="status">
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className="flex items-start gap-2.5 rounded-md border border-gray-100 bg-gray-50/70 p-3">
+          <Skeleton className="mt-0.5 h-4 w-4 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2"><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-2/3" /></div>
+        </div>
+      ))}
+      <span className="sr-only">Loading recommendations...</span>
     </div>
   );
 }
@@ -392,7 +447,7 @@ function SalesOverviewChart({ data }: { data: SalesOverview[] }) {
 
   if (!data.length) {
     return (
-      <div className="flex h-[200px] items-center justify-center text-xs text-gray-500">
+      <div className="flex h-50 items-center justify-center text-xs text-gray-500">
         No sales data available.
       </div>
     );
@@ -401,7 +456,7 @@ function SalesOverviewChart({ data }: { data: SalesOverview[] }) {
   const maxSales = Math.max(...data.map((item) => item.sales), 1);
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-[200px] w-full">
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-50 w-full">
       {data.map((item, index) => {
         const barWidth = chartWidth / Math.max(data.length * 1.6, 1);
         const gap = chartWidth / Math.max(data.length, 1);
@@ -445,7 +500,7 @@ function TopProductsChart({ data }: { data: TopSellingProduct[] }) {
 
   if (!data.length || total === 0) {
     return (
-      <div className="flex h-[180px] items-center justify-center text-xs text-gray-500">
+      <div className="flex h-45 items-center justify-center text-xs text-gray-500">
         No sales data available.
       </div>
     );
@@ -457,8 +512,8 @@ function TopProductsChart({ data }: { data: TopSellingProduct[] }) {
   let currentAngle = 0;
 
   return (
-    <div className="flex h-[180px] items-center justify-center">
-      <svg viewBox="0 0 150 150" className="h-[150px] w-[150px]">
+    <div className="flex h-45 items-center justify-center">
+      <svg viewBox="0 0 150 150" className="h-37.5 w-37.5">
         {data.slice(0, 5).map((item, index) => {
           const percentage = item.quantity / total;
           const angle = percentage * 360;
