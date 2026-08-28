@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   SlidersHorizontal,
   Search,
@@ -81,7 +81,7 @@ function Sales() {
   }, [search, cashierFilter]);
 
   // Fetch Sales Data from API
-  const fetchSales = async () => {
+  const fetchSales = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -131,11 +131,11 @@ function Sales() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch, debouncedCashier, startDate, endDate, page]);
 
   useEffect(() => {
     fetchSales();
-  }, [page, debouncedSearch, debouncedCashier, startDate, endDate]);
+  }, [fetchSales]);
 
   const handleReset = () => {
     setSearch("");

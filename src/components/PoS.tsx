@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
   ShoppingCart,
@@ -42,7 +42,7 @@ function POS() {
   const [dateTime, setDateTime] = useState(new Date());
 
   // Fetch products from database
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -98,7 +98,7 @@ function POS() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, category]);
 
   // Real-time clock
   useEffect(() => {
@@ -116,7 +116,7 @@ function POS() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [search, category]);
+  }, [fetchProducts]);
 
   // Get unique categories from products
   const categories = useMemo(() => {

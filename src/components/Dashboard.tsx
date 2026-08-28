@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   AlertTriangle,
-  Lightbulb,
   Info,
   TrendingUp,
   Receipt,
@@ -216,7 +215,7 @@ function Dashboard() {
 
           <div className="p-4">
             {loading ? (
-              <div className="flex h-[200px] items-center justify-center text-xs text-gray-500">
+              <div className="flex h-50 items-center justify-center text-xs text-gray-500">
                 Loading sales overview...
               </div>
             ) : (
@@ -234,7 +233,7 @@ function Dashboard() {
             Inventory Alerts
           </div>
 
-          <div className="p-4 min-h-[230px]">
+          <div className="p-4 min-h-57.5">
             {loading ? (
               <div className="flex h-44 items-center justify-center text-xs text-gray-500">
                 Loading alerts...
@@ -274,7 +273,7 @@ function Dashboard() {
             Top Selling Products
           </div>
 
-          <div className="p-4 min-h-[230px] flex items-center justify-center">
+          <div className="p-4 min-h-57.5 flex items-center justify-center">
             {loading ? (
               <div className="text-xs text-gray-500">Loading top products...</div>
             ) : (
@@ -392,7 +391,7 @@ function SalesOverviewChart({ data }: { data: SalesOverview[] }) {
 
   if (!data.length) {
     return (
-      <div className="flex h-[200px] items-center justify-center text-xs text-gray-500">
+      <div className="flex h-50 items-center justify-center text-xs text-gray-500">
         No sales data available.
       </div>
     );
@@ -401,7 +400,7 @@ function SalesOverviewChart({ data }: { data: SalesOverview[] }) {
   const maxSales = Math.max(...data.map((item) => item.sales), 1);
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-[200px] w-full">
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-50 w-full">
       {data.map((item, index) => {
         const barWidth = chartWidth / Math.max(data.length * 1.6, 1);
         const gap = chartWidth / Math.max(data.length, 1);
@@ -445,7 +444,7 @@ function TopProductsChart({ data }: { data: TopSellingProduct[] }) {
 
   if (!data.length || total === 0) {
     return (
-      <div className="flex h-[180px] items-center justify-center text-xs text-gray-500">
+      <div className="flex h-45 items-center justify-center text-xs text-gray-500">
         No sales data available.
       </div>
     );
@@ -457,8 +456,8 @@ function TopProductsChart({ data }: { data: TopSellingProduct[] }) {
   let currentAngle = 0;
 
   return (
-    <div className="flex h-[180px] items-center justify-center">
-      <svg viewBox="0 0 150 150" className="h-[150px] w-[150px]">
+    <div className="flex h-45 items-center justify-center">
+      <svg viewBox="0 0 150 150" className="h-37.5 w-37.5">
         {data.slice(0, 5).map((item, index) => {
           const percentage = item.quantity / total;
           const angle = percentage * 360;
