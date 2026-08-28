@@ -908,9 +908,7 @@ function ProductForm({
 
                             <input
                               type="number"
-                              value={
-                                item.quantity
-                              }
+                              value={item.quantity}
                               onChange={(e) =>
                                 updateRecipeItem(
                                   index,
@@ -918,9 +916,9 @@ function ProductForm({
                                   e.target.value
                                 )
                               }
-                              min="0.0001"
-                              step="0.01"
-                              placeholder="0"
+                              min="0"
+                              step="0.0001"
+                              placeholder="0.0000"
                               disabled={loading}
                               className="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-[11px] text-gray-900 focus:border-black focus:outline-none"
                             />
