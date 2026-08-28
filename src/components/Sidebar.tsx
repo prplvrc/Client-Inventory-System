@@ -11,11 +11,17 @@ import {
   ShieldAlert,
   Settings,
   LogOut,
+  X,
 } from "lucide-react";
 
 import Logo from "../assets/denberts-logo.png";
 
-function Sidebar() {
+type SidebarProps = {
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
 
   const mainMenu = [
@@ -34,6 +40,7 @@ function Sidebar() {
   ];
 
   const handleLogout = () => {
+    onClose();
     navigate("/login");
   };
 
@@ -45,11 +52,32 @@ function Sidebar() {
     }`;
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 flex h-screen w-60 flex-col justify-between overflow-hidden border-r border-amber-200/50 bg-[#EFEABB] p-3">
+    <>
+      {isOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation menu"
+          onClick={onClose}
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-60 flex-col justify-between overflow-y-auto border-r border-amber-200/50 bg-[#EFEABB] p-3 shadow-xl transition-transform duration-200 lg:translate-x-0 lg:shadow-none ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
       {/* Top Section */}
       <div className="space-y-3">
         {/* Logo Header */}
         <div className="flex shrink-0 items-center justify-center border-b border-black/5 pb-2 pt-1">
+          <button
+            type="button"
+            aria-label="Close navigation menu"
+            onClick={onClose}
+            className="absolute right-3 top-3 rounded-md p-1 text-gray-700 hover:bg-black/5 lg:hidden"
+          >
+            <X size={20} aria-hidden="true" />
+          </button>
           <img
             src={Logo}
             alt="Denbert's Logo"
@@ -66,7 +94,7 @@ function Sidebar() {
             {mainMenu.map((item) => {
               const Icon = item.icon;
               return (
-                <NavLink key={item.path} to={item.path} className={navItemClass}>
+                <NavLink key={item.path} to={item.path} className={navItemClass} onClick={onClose}>
                   <Icon size={18} className="shrink-0 transition-transform group-hover:scale-110" />
                   <span>{item.name}</span>
                 </NavLink>
@@ -84,7 +112,7 @@ function Sidebar() {
             {managementMenu.map((item) => {
               const Icon = item.icon;
               return (
-                <NavLink key={item.path} to={item.path} className={navItemClass}>
+                <NavLink key={item.path} to={item.path} className={navItemClass} onClick={onClose}>
                   <Icon size={18} className="shrink-0 transition-transform group-hover:scale-110" />
                   <span>{item.name}</span>
                 </NavLink>
@@ -100,7 +128,7 @@ function Sidebar() {
           Settings
         </h3>
         <nav className="space-y-0.5">
-          <NavLink to="/account" className={navItemClass}>
+          <NavLink to="/account" className={navItemClass} onClick={onClose}>
             <Settings size={18} className="shrink-0 transition-transform group-hover:scale-110" />
             <span>Account</span>
           </NavLink>
@@ -115,7 +143,8 @@ function Sidebar() {
           </button>
         </nav>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 
