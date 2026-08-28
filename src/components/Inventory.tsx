@@ -9,10 +9,17 @@ import {
 } from "lucide-react";
 import InventoryForm from "./InventoryForm";
 
+interface Ingredient {
+  id: number;
+  name: string;
+  unit: string;
+  status: string;
+}
+
 interface InventoryItem {
   id: number;
-  ingredient: string;
-  unit: string;
+  ingredientId: number;
+  ingredient: Ingredient;
   initialStock: number;
   availableStock: number;
   status: string;
@@ -29,12 +36,12 @@ interface InventoryResponse {
 function Inventory() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
 
-  // Raw Filter States
+  // Filter states
   const [search, setSearch] = useState("");
   const [unit, setUnit] = useState("");
   const [status, setStatus] = useState("");
 
-  // Debounced Filter States
+  // Debounced filter states
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [debouncedUnit, setDebouncedUnit] = useState("");
   const [debouncedStatus, setDebouncedStatus] = useState("");
@@ -54,8 +61,12 @@ function Inventory() {
   const [dateTime, setDateTime] = useState(new Date());
 
   const limit = 10;
+  const apiUrl = import.meta.env.VITE_API_URL;
 
-  // Real-time clock
+  // ===============================
+  // Real-time Clock
+  // ===============================
+
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
@@ -64,7 +75,10 @@ function Inventory() {
     return () => clearInterval(timer);
   }, []);
 
-  // Debounce search and filter inputs
+  // ===============================
+  // Debounce Filters
+  // ===============================
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -75,11 +89,18 @@ function Inventory() {
     return () => clearTimeout(timer);
   }, [search, unit, status]);
 
+  // ===============================
   // Fetch Inventory
+  // ===============================
+
   const fetchInventory = async () => {
     try {
       setLoading(true);
       setError("");
+
+      if (!apiUrl) {
+        throw new Error("VITE_API_URL is not configured.");
+      }
 
       const params = new URLSearchParams();
 
@@ -97,12 +118,6 @@ function Inventory() {
 
       params.append("page", String(page));
       params.append("limit", String(limit));
-
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      if (!apiUrl) {
-        throw new Error("VITE_API_URL is not configured.");
-      }
 
       const response = await fetch(
         `${apiUrl}/inventory?${params.toString()}`,
@@ -126,8 +141,13 @@ function Inventory() {
       setTotalPages(result.totalPages ?? 1);
     } catch (err) {
       console.error("Fetch inventory error:", err);
+
       setInventory([]);
-      setError("Unable to load inventory. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load inventory. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -142,19 +162,28 @@ function Inventory() {
     debouncedStatus,
   ]);
 
-  // Add Inventory Item
+  // ===============================
+  // Add Inventory
+  // ===============================
+
   const handleAdd = () => {
     setSelectedInventory(null);
     setShowForm(true);
   };
 
-  // Edit Inventory Item
+  // ===============================
+  // Edit Inventory
+  // ===============================
+
   const handleEdit = (item: InventoryItem) => {
     setSelectedInventory(item);
     setShowForm(true);
   };
 
-  // Delete Inventory Item
+  // ===============================
+  // Delete Inventory
+  // ===============================
+
   const handleDelete = async (id: number) => {
     if (
       !window.confirm(
@@ -167,33 +196,46 @@ function Inventory() {
     try {
       setError("");
 
-      const apiUrl = import.meta.env.VITE_API_URL;
-
       if (!apiUrl) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      const response = await fetch(`${apiUrl}/inventory/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `${apiUrl}/inventory/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to delete inventory item: ${response.status}`
-        );
+        let message = "Failed to delete inventory item.";
+
+        try {
+          const result = await response.json();
+          message = result.message || message;
+        } catch {
+          // Response was not JSON
+        }
+
+        throw new Error(message);
       }
 
       await fetchInventory();
     } catch (err) {
       console.error("Delete inventory error:", err);
-      setError("Unable to delete inventory item.");
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to delete inventory item."
+      );
     }
   };
 
+  // ===============================
   // Reset Filters
+  // ===============================
+
   const handleReset = () => {
     setSearch("");
     setUnit("");
@@ -201,8 +243,37 @@ function Inventory() {
     setPage(1);
   };
 
+  // ===============================
+  // Stock Level
+  // ===============================
+
+  const getStockLevel = (stock: number) => {
+    if (stock <= 0) {
+      return "OUT OF STOCK";
+    }
+
+    if (stock <= 10) {
+      return "LOW STOCK";
+    }
+
+    return "IN STOCK";
+  };
+
+  const getStockLevelClass = (stockLevel: string) => {
+    if (stockLevel === "IN STOCK") {
+      return "bg-green-100 text-green-800";
+    }
+
+    if (stockLevel === "LOW STOCK") {
+      return "bg-yellow-100 text-yellow-800";
+    }
+
+    return "bg-red-100 text-red-800";
+  };
+
   return (
     <div className="w-full p-4 sm:p-6">
+
       {/* HEADER */}
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -236,6 +307,8 @@ function Inventory() {
 
       {/* ACTION BAR */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+        {/* SEARCH */}
         <div className="flex flex-1 items-center gap-3">
           <div className="relative w-full max-w-xs">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
@@ -254,17 +327,20 @@ function Inventory() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* FILTER TOGGLE */}
+
+          {/* FILTER */}
           <button
             type="button"
-            onClick={() => setShowFilters((prev) => !prev)}
+            onClick={() =>
+              setShowFilters((prev) => !prev)
+            }
             className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
           >
             <SlidersHorizontal size={14} />
             Filters
           </button>
 
-          {/* ADD BUTTON */}
+          {/* ADD */}
           <button
             type="button"
             onClick={handleAdd}
@@ -276,9 +352,10 @@ function Inventory() {
         </div>
       </div>
 
-      {/* EXPANDABLE FILTERS */}
+      {/* FILTERS */}
       {showFilters && (
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+
           <input
             type="text"
             value={unit}
@@ -290,16 +367,18 @@ function Inventory() {
             className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
           />
 
-          <input
-            type="text"
+          <select
             value={status}
             onChange={(e) => {
               setStatus(e.target.value);
               setPage(1);
             }}
-            placeholder="Filter by Status"
             className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
-          />
+          >
+            <option value="">All Status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
 
           <button
             type="button"
@@ -312,19 +391,23 @@ function Inventory() {
         </div>
       )}
 
-      {/* ERROR MESSAGE */}
+      {/* ERROR */}
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
           {error}
         </div>
       )}
 
-      {/* DATA TABLE */}
+      {/* TABLE */}
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
+
           <table className="w-full border-collapse text-left text-xs text-gray-700">
+
             <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
+
               <tr>
+
                 <th className="w-16 border-r border-gray-200 px-4 py-2.5 text-center">
                   ID
                 </th>
@@ -346,118 +429,165 @@ function Inventory() {
                 </th>
 
                 <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                  Stock Level
+                </th>
+
+                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
                   Status
                 </th>
 
                 <th className="px-4 py-2.5 text-center">
                   Actions
                 </th>
+
               </tr>
+
             </thead>
 
             <tbody className="divide-y divide-gray-200">
+
               {loading ? (
+
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="py-12 text-center text-gray-500"
                   >
                     Loading inventory...
                   </td>
                 </tr>
+
               ) : inventory.length === 0 ? (
+
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="py-12 text-center text-gray-500"
                   >
                     No inventory items found.
                   </td>
                 </tr>
+
               ) : (
-                inventory.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="transition hover:bg-gray-50/80"
-                  >
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center font-medium text-gray-500">
-                      #{item.id}
-                    </td>
 
-                    <td className="border-r border-gray-200 px-4 py-2.5 font-semibold text-gray-900">
-                      {item.ingredient}
-                    </td>
+                inventory.map((item) => {
 
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
-                      {item.unit}
-                    </td>
+                  const stockLevel = getStockLevel(
+                    Number(item.availableStock)
+                  );
 
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-right font-medium text-gray-900">
-                      {Number(item.initialStock).toFixed(2)}
-                    </td>
+                  return (
+                    <tr
+                      key={item.id}
+                      className="transition hover:bg-gray-50/80"
+                    >
 
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-right font-medium text-gray-900">
-                      {Number(item.availableStock).toFixed(2)}
-                    </td>
+                      {/* ID */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center font-medium text-gray-500">
+                        #{item.id}
+                      </td>
 
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center">
-                      <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          item.status?.toLowerCase() === "in stock"
-                            ? "bg-green-100 text-green-800"
-                            : item.status?.toLowerCase() === "low stock"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : item.status?.toLowerCase() ===
-                                  "out of stock"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
-                    </td>
+                      {/* INGREDIENT */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 font-semibold text-gray-900">
+                        {item.ingredient?.name ?? "—"}
+                      </td>
 
-                    <td className="px-4 py-2.5 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(item)}
-                          className="flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 transition hover:bg-emerald-100"
+                      {/* UNIT */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
+                        {item.ingredient?.unit ?? "—"}
+                      </td>
+
+                      {/* INITIAL STOCK */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-right font-medium text-gray-900">
+                        {Number(item.initialStock).toFixed(2)}
+                      </td>
+
+                      {/* AVAILABLE STOCK */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-right font-medium text-gray-900">
+                        {Number(item.availableStock).toFixed(2)}
+                      </td>
+
+                      {/* STOCK LEVEL */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
+                        <span
+                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${getStockLevelClass(
+                            stockLevel
+                          )}`}
                         >
-                          <Pencil size={11} />
-                          Edit
-                        </button>
+                          {stockLevel}
+                        </span>
+                      </td>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(item.id)}
-                          className="flex items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 transition hover:bg-rose-100"
+                      {/* STATUS */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
+                        <span
+                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            item.status === "ACTIVE"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
                         >
-                          <Trash2 size={11} />
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {item.status}
+                        </span>
+                      </td>
+
+                      {/* ACTIONS */}
+                      <td className="px-4 py-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleEdit(item)
+                            }
+                            className="flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 transition hover:bg-emerald-100"
+                          >
+                            <Pencil size={11} />
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDelete(item.id)
+                            }
+                            className="flex items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 transition hover:bg-rose-100"
+                          >
+                            <Trash2 size={11} />
+                            Delete
+                          </button>
+
+                        </div>
+                      </td>
+
+                    </tr>
+                  );
+                })
               )}
+
             </tbody>
+
           </table>
+
         </div>
       </div>
 
       {/* PAGINATION */}
       <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
+
         <span>
           Page <strong>{page}</strong> of{" "}
           <strong>{totalPages}</strong>
         </span>
 
         <div className="flex items-center gap-2">
+
           <button
             type="button"
             disabled={page <= 1}
-            onClick={() => setPage((curr) => curr - 1)}
+            onClick={() =>
+              setPage((current) => current - 1)
+            }
             className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Previous
@@ -466,15 +596,18 @@ function Inventory() {
           <button
             type="button"
             disabled={page >= totalPages}
-            onClick={() => setPage((curr) => curr + 1)}
+            onClick={() =>
+              setPage((current) => current + 1)
+            }
             className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
           </button>
+
         </div>
       </div>
 
-      {/* MODAL FORM */}
+      {/* FORM MODAL */}
       {showForm && (
         <InventoryForm
           inventory={selectedInventory}
@@ -489,6 +622,7 @@ function Inventory() {
           }}
         />
       )}
+
     </div>
   );
 }
