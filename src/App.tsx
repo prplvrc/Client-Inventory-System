@@ -11,6 +11,7 @@ import Dashboard from "./components/Dashboard";
 import PoS from "./components/PoS";
 import AuditLogs from "./components/AuditLogs";
 import Account from "./components/Account";
+import Categories from "./components/Categories";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/pos" element={<PoS />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/categories" element={<Categories />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/recommendation" element={<Recommendation />} />

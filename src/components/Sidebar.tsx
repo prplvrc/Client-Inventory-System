@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Boxes,
   ShoppingBag,
+  Tags,
   TrendingUp,
   LineChart,
   Lightbulb,
@@ -22,6 +23,7 @@ function Sidebar() {
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     { name: "Inventory", path: "/inventory", icon: Boxes },
     { name: "Products", path: "/products", icon: ShoppingBag },
+    { name: "Categories", path: "/categories", icon: Tags },
     { name: "Sales", path: "/sales", icon: TrendingUp },
     { name: "Forecasting", path: "/forecasting", icon: LineChart },
   ];
