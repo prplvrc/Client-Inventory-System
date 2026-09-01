@@ -160,7 +160,7 @@ function ProductForm({
     };
 
     fetchCategories();
-  }, [apiUrl, product?.id, product?.category, product?.categoryId]);
+  }, [apiUrl, product]);
 
   // ========================================
   // Fetch ingredients

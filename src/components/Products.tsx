@@ -157,7 +157,7 @@ function Products() {
     <div className="w-full p-4 sm:p-6">
       {/* HEADER */}
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="pl-12 lg:pl-0">
           <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
             Products
           </h1>

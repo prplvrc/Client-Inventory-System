@@ -28,6 +28,15 @@ function Categories() {
   const [selectedCategory, setSelectedCategory] =
     useState<Category | null>(null);
 
+  const [dateTime, setDateTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
   const apiUrl = import.meta.env.VITE_API_URL;
 
   // ===============================
@@ -149,7 +158,7 @@ function Categories() {
 
       {/* HEADER */}
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="pl-12 lg:pl-0">
           <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
             Categories
           </h1>
@@ -157,6 +166,24 @@ function Categories() {
           <p className="text-xs text-gray-500">
             Manage product categories
           </p>
+        </div>
+
+        <div className="flex items-center gap-4 text-xs font-medium text-gray-600">
+          <span>
+            DATE:{" "}
+            {dateTime.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+
+          <span>
+            TIME:{" "}
+            {dateTime.toLocaleTimeString("en-US", {
+              hour12: false,
+            })}
+          </span>
         </div>
       </div>
 
