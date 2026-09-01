@@ -128,10 +128,7 @@ function AuditLog() {
   useEffect(() => {
     fetchAuditLogs();
   }, [
-    page,
-    debouncedSearch,
-    debouncedAction,
-    debouncedUser,
+    page, debouncedSearch, debouncedAction, debouncedUser,
   ]);
 
   // Reset Filters

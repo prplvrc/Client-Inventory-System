@@ -168,7 +168,7 @@ function Forecasting() {
             Forecast Summary
           </div>
 
-          <div className="min-h-[280px] overflow-x-auto">
+          <div className="min-h-70 overflow-x-auto">
             {loading ? (
               <ForecastSummarySkeleton />
             ) : data?.summary?.length ? (
@@ -211,7 +211,7 @@ function Forecasting() {
             Historical Sales
           </div>
 
-          <div className="min-h-[280px] p-4 flex items-center justify-center">
+          <div className="min-h-70 p-4 flex items-center justify-center">
             {loading ? (
               <HistoricalSalesChartSkeleton />
             ) : data?.historicalSales?.length ? (
@@ -295,7 +295,7 @@ function HistoricalSalesChartSkeleton() {
 
   return (
     <div className="h-full w-full overflow-x-auto" role="status">
-      <svg viewBox="0 0 500 210" className="h-[220px] w-full min-w-[380px]" aria-hidden="true">
+      <svg viewBox="0 0 500 210" className="h-55 w-full min-w-95" aria-hidden="true">
         <line x1="45" y1="10" x2="45" y2="175" className="stroke-gray-200" />
         <line x1="45" y1="175" x2="485" y2="175" className="stroke-gray-200" />
         {[40, 80, 120, 160].map((y) => <line key={y} x1="45" y1={y} x2="485" y2={y} className="stroke-gray-100" />)}
@@ -332,7 +332,7 @@ function SalesChart({ data }: { data: HistoricalSale[] }) {
 
   return (
     <div className="h-full w-full overflow-x-auto">
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-[220px] w-full min-w-[380px]">
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-55 w-full min-w-">
         {/* Y axis */}
         <line
           x1={paddingLeft}
