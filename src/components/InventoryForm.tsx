@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { X, Plus } from "lucide-react";
-
+import { API_URL } from "../services/api";
 interface Ingredient {
   id: number;
   name: string;
@@ -67,8 +67,6 @@ function InventoryForm({
 
   const isEditing = Boolean(inventory);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   // ========================================
   // Fetch Ingredients
   // ========================================
@@ -78,11 +76,11 @@ function InventoryForm({
       setLoadingIngredients(true);
       setError("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      const response = await fetch(`${apiUrl}/ingredients`);
+      const response = await fetch(`${API_URL}/ingredients`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch ingredients");
@@ -106,7 +104,7 @@ function InventoryForm({
 
   useEffect(() => {
     fetchIngredients();
-  }, [apiUrl]);
+  }, [API_URL]);
 
   // ========================================
   // Add New Ingredient
@@ -117,7 +115,7 @@ function InventoryForm({
       setCreatingIngredient(true);
       setIngredientError("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
@@ -131,7 +129,7 @@ function InventoryForm({
         return;
       }
 
-      const response = await fetch(`${apiUrl}/ingredients`, {
+      const response = await fetch(`${API_URL}/ingredients`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -200,7 +198,7 @@ function InventoryForm({
       setLoading(true);
       setError("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
@@ -243,8 +241,8 @@ function InventoryForm({
       };
 
       const url = inventory
-        ? `${apiUrl}/inventory/${inventory.id}`
-        : `${apiUrl}/inventory`;
+        ? `${API_URL}/inventory/${inventory.id}`
+        : `${API_URL}/inventory`;
 
       const response = await fetch(url, {
         method: inventory ? "PUT" : "POST",

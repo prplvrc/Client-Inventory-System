@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import ProductForm from "./ProductForm";
 import { TableSkeleton } from "./LoadingSkeleton";
+import { API_URL } from "../services/api";
 
 interface Product {
   id: number;
@@ -86,10 +87,9 @@ function Products() {
       params.append("page", String(page));
       params.append("limit", String(limit));
 
-      const apiUrl = import.meta.env.VITE_API_URL;
-      if (!apiUrl) throw new Error("VITE_API_URL is not configured.");
+      if (!API_URL) throw new Error("VITE_API_URL is not configured.");
 
-      const response = await fetch(`${apiUrl}/products?${params.toString()}`, {
+      const response = await fetch(`${API_URL}/products?${params.toString()}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -129,10 +129,9 @@ function Products() {
 
     try {
       setError("");
-      const apiUrl = import.meta.env.VITE_API_URL;
-      if (!apiUrl) throw new Error("VITE_API_URL is not configured.");
+      if (!API_URL) throw new Error("VITE_API_URL is not configured.");
 
-      const response = await fetch(`${apiUrl}/products/${id}`, {
+      const response = await fetch(`${API_URL}/products/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });

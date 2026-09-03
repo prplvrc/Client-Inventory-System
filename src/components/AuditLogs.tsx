@@ -5,6 +5,7 @@ import {
   Search,
 } from "lucide-react";
 import { TableSkeleton } from "./LoadingSkeleton";
+import { API_URL } from "../services/api";
 
 interface AuditLogItem {
   id: number;
@@ -73,6 +74,10 @@ function AuditLog() {
       setLoading(true);
       setError("");
 
+      if (!API_URL) {
+        throw new Error("VITE_API_URL is not configured.");
+      }
+
       const params = new URLSearchParams();
 
       if (debouncedSearch.trim()) {
@@ -90,14 +95,8 @@ function AuditLog() {
       params.append("page", String(page));
       params.append("limit", String(limit));
 
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      if (!apiUrl) {
-        throw new Error("VITE_API_URL is not configured.");
-      }
-
       const response = await fetch(
-        `${apiUrl}/audit-logs?${params.toString()}`,
+        `${API_URL}/audit-logs?${params.toString()}`,
         {
           method: "GET",
           headers: {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/denberts-logo.png";
+import { API_URL } from "../services/api";
 
 interface LoginResponse {
   message: string;
@@ -34,13 +35,12 @@ function Login() {
     setLoading(true);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      const response = await fetch(`${apiUrl}/auth/login`, {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

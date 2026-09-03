@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { X, Plus, Trash2 } from "lucide-react";
+import { API_URL } from "../services/api";
 
 interface Product {
   id: number;
@@ -92,8 +93,6 @@ function ProductForm({
 
   const isEditing = Boolean(product);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   // ========================================
   // Fetch categories
   // ========================================
@@ -103,14 +102,14 @@ function ProductForm({
       try {
         setLoadingCategories(true);
 
-        if (!apiUrl) {
+        if (!API_URL) {
           throw new Error(
             "VITE_API_URL is not configured."
           );
         }
 
         const response = await fetch(
-          `${apiUrl}/categories`
+          `${API_URL}/categories`
         );
 
         if (!response.ok) {
@@ -160,7 +159,7 @@ function ProductForm({
     };
 
     fetchCategories();
-  }, [apiUrl, product]);
+  }, [API_URL, product]);
 
   // ========================================
   // Fetch ingredients
@@ -171,14 +170,14 @@ function ProductForm({
       try {
         setLoadingIngredients(true);
 
-        if (!apiUrl) {
+        if (!API_URL) {
           throw new Error(
             "VITE_API_URL is not configured."
           );
         }
 
         const response = await fetch(
-          `${apiUrl}/ingredients`
+          `${API_URL}/ingredients`
         );
 
         if (!response.ok) {
@@ -208,7 +207,7 @@ function ProductForm({
     };
 
     fetchIngredients();
-  }, [apiUrl]);
+  }, [API_URL]);
 
   // ========================================
   // Fetch product details when editing
@@ -224,14 +223,14 @@ function ProductForm({
       try {
         setLoadingProduct(true);
 
-        if (!apiUrl) {
+        if (!API_URL) {
           throw new Error(
             "VITE_API_URL is not configured."
           );
         }
 
         const response = await fetch(
-          `${apiUrl}/products/${product.id}`
+          `${API_URL}/products/${product.id}`
         );
 
         if (!response.ok) {
@@ -278,7 +277,7 @@ function ProductForm({
     };
 
     fetchProductDetails();
-  }, [apiUrl, product?.id]);
+  }, [API_URL, product?.id]);
 
   // ========================================
   // Add recipe item
@@ -340,7 +339,7 @@ function ProductForm({
       setLoading(true);
       setError("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error(
           "VITE_API_URL is not configured."
         );
@@ -434,8 +433,8 @@ function ProductForm({
       };
 
       const url = product
-        ? `${apiUrl}/products/${product.id}`
-        : `${apiUrl}/products`;
+        ? `${API_URL}/products/${product.id}`
+        : `${API_URL}/products`;
 
       const response = await fetch(url, {
         method: product ? "PUT" : "POST",

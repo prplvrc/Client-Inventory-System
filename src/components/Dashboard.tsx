@@ -8,6 +8,7 @@ import {
   ShoppingBag,
   CircleDollarSign,
 } from "lucide-react";
+import { API_URL } from "../services/api";
 
 interface DashboardMetrics {
   todaySales: number;
@@ -77,13 +78,11 @@ function Dashboard() {
         setLoading(true);
         setError("");
 
-        const apiUrl = import.meta.env.VITE_API_URL;
-
-        if (!apiUrl) {
+        if (!API_URL) {
           throw new Error("VITE_API_URL is not configured.");
         }
 
-        const response = await fetch(`${apiUrl}/dashboard`, {
+        const response = await fetch(`${API_URL}/dashboard`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

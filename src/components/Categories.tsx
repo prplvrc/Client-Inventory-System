@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import CategoryForm from "./CategoryForm";
 import { TableSkeleton } from "./LoadingSkeleton";
+import { API_URL } from "../services/api";
 
 interface Category {
   id: number;
@@ -37,7 +38,6 @@ function Categories() {
 
     return () => clearInterval(timer);
   }, []);
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   // ===============================
   // Fetch Categories
@@ -48,11 +48,11 @@ function Categories() {
       setLoading(true);
       setError("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      const response = await fetch(`${apiUrl}/categories`);
+      const response = await fetch(`${API_URL}/categories`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch categories");
@@ -112,12 +112,12 @@ function Categories() {
     try {
       setError("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
       const response = await fetch(
-        `${apiUrl}/categories/${id}`,
+        `${API_URL}/categories/${id}`,
         {
           method: "DELETE",
         }

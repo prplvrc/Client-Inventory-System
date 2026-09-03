@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { X } from "lucide-react";
+import { API_URL } from "../services/api";
 
 interface Category {
   id: number;
@@ -33,8 +34,6 @@ function CategoryForm({
 
   const isEditing = Boolean(category);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
@@ -44,7 +43,7 @@ function CategoryForm({
       setLoading(true);
       setError("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
@@ -60,8 +59,8 @@ function CategoryForm({
       };
 
       const url = category
-        ? `${apiUrl}/categories/${category.id}`
-        : `${apiUrl}/categories`;
+        ? `${API_URL}/categories/${category.id}`
+        : `${API_URL}/categories`;
 
       const response = await fetch(url, {
         method: category ? "PUT" : "POST",

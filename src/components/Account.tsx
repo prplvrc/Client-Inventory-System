@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { User, Lock, Save, RefreshCw } from "lucide-react";
 import { Skeleton } from "./LoadingSkeleton";
+import { API_URL } from "../services/api";
 
 interface AccountData {
   id: number;
@@ -27,8 +28,6 @@ function Account() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   // Fetch Account
   const fetchAccount = async () => {
     try {
@@ -36,11 +35,11 @@ function Account() {
       setError("");
       setSuccess("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      const response = await fetch(`${apiUrl}/account`, {
+      const response = await fetch(`${API_URL}/account`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -76,11 +75,11 @@ function Account() {
       setError("");
       setSuccess("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      const response = await fetch(`${apiUrl}/account`, {
+      const response = await fetch(`${API_URL}/account`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -133,11 +132,11 @@ function Account() {
       setError("");
       setSuccess("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      const response = await fetch(`${apiUrl}/account/password`, {
+      const response = await fetch(`${API_URL}/account/password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import InventoryForm from "./InventoryForm";
 import { TableSkeleton } from "./LoadingSkeleton";
+import { API_URL } from "../services/api";
 
 interface Ingredient {
   id: number;
@@ -62,7 +63,6 @@ function Inventory() {
   const [dateTime, setDateTime] = useState(new Date());
 
   const limit = 10;
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   // ===============================
   // Real-time Clock
@@ -99,7 +99,7 @@ function Inventory() {
       setLoading(true);
       setError("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
@@ -121,7 +121,7 @@ function Inventory() {
       params.append("limit", String(limit));
 
       const response = await fetch(
-        `${apiUrl}/inventory?${params.toString()}`,
+        `${API_URL}/inventory?${params.toString()}`,
         {
           method: "GET",
           headers: {
@@ -197,12 +197,12 @@ function Inventory() {
     try {
       setError("");
 
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
       const response = await fetch(
-        `${apiUrl}/inventory/${id}`,
+        `${API_URL}/inventory/${id}`,
         {
           method: "DELETE",
         }

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import TransactionDetailsModal from "../components/TransactionDetailsModal";
 import { TableSkeleton } from "./LoadingSkeleton";
+import { API_URL } from "../services/api";
 
 interface SaleRecord {
   id: number;
@@ -97,10 +98,9 @@ function Sales() {
       params.append("page", String(page));
       params.append("limit", String(limit));
 
-      const apiUrl = import.meta.env.VITE_API_URL;
-      if (!apiUrl) throw new Error("VITE_API_URL is not configured.");
+      if (!API_URL) throw new Error("VITE_API_URL is not configured.");
 
-      const response = await fetch(`${apiUrl}/sales?${params.toString()}`, {
+      const response = await fetch(`${API_URL}/sales?${params.toString()}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });

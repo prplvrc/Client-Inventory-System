@@ -8,6 +8,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { CardSkeleton } from "./LoadingSkeleton";
+import { API_URL } from "../services/api";
 
 interface TransactionItem {
   id: number;
@@ -59,14 +60,12 @@ function TransactionDetailsModal({
         setError("");
         setTransaction(null);
 
-        const apiUrl = import.meta.env.VITE_API_URL;
-
-        if (!apiUrl) {
+        if (!API_URL) {
           throw new Error("VITE_API_URL is not configured.");
         }
 
         const response = await fetch(
-          `${apiUrl}/sales/${transactionId}`,
+          `${API_URL}/sales/${transactionId}`,
           {
             method: "GET",
             headers: {

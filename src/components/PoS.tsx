@@ -12,6 +12,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Skeleton } from "./LoadingSkeleton";
+import { API_URL } from "../services/api";
 
 interface Product {
   id: number;
@@ -109,9 +110,7 @@ function POS() {
       setLoading(true);
       setError("");
 
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
@@ -129,7 +128,7 @@ function POS() {
       }
 
       const response = await fetch(
-        `${apiUrl}/products?${params.toString()}`,
+        `${API_URL}/products?${params.toString()}`,
         {
           method: "GET",
           headers: {
@@ -327,9 +326,7 @@ function POS() {
       setPaymentError("");
       setSuccessMessage("");
 
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      if (!apiUrl) {
+      if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
 
@@ -349,7 +346,7 @@ function POS() {
       }));
 
       // Send sale to backend
-      const response = await fetch(`${apiUrl}/sales`, {
+      const response = await fetch(`${API_URL}/sales`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
