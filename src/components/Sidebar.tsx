@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import Logo from "../assets/denberts-logo.png";
+import { useAuth } from "../hooks/useAuth";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -23,15 +24,18 @@ type SidebarProps = {
 
 function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const isAdmin = user?.role === "ADMIN";
 
   const mainMenu = [
     { name: "POS", path: "/pos", icon: Monitor },
-    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, adminOnly: true },
     { name: "Inventory", path: "/inventory", icon: Boxes },
     { name: "Products", path: "/products", icon: ShoppingBag },
     { name: "Categories", path: "/categories", icon: Tags },
-    { name: "Sales", path: "/sales", icon: TrendingUp },
-    { name: "Forecasting", path: "/forecasting", icon: LineChart },
+    { name: "Sales", path: "/sales", icon: TrendingUp, adminOnly: true },
+    { name: "Forecasting", path: "/forecasting", icon: LineChart, adminOnly: true },
   ];
 
   const managementMenu = [
@@ -39,6 +43,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: "Recommendation",
       path: "/recommendation",
       icon: Lightbulb,
+      adminOnly: true,
     },
     {
       name: "Audit Logs",
@@ -48,16 +53,21 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
     },
   ];
 
+  // Filter menus based on user role
+  const visibleMainMenu = mainMenu.filter((item) => !item.adminOnly || isAdmin);
+  const visibleManagementMenu = managementMenu.filter(
+    (item) => !item.adminOnly || isAdmin
+  );
+
   const handleLogout = () => {
     onClose();
+    logout();
     navigate("/login");
   };
 
   const navItemClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-      isActive
-        ? "bg-red-600 text-white"
-        : "text-gray-700 hover:bg-black/5"
+      isActive ? "bg-red-600 text-white" : "text-gray-700 hover:bg-black/5"
     }`;
 
   return (
@@ -104,7 +114,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
             </h3>
 
             <nav className="space-y-1">
-              {mainMenu.map((item) => {
+              {visibleMainMenu.map((item) => {
                 const Icon = item.icon;
 
                 return (
@@ -122,30 +132,32 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
             </nav>
           </div>
 
-          {/* Management */}
-          <div>
-            <h3 className="mb-2 px-3 text-xs font-semibold uppercase text-gray-500">
-              Management
-            </h3>
+          {/* Management - rendered only if there are visible items */}
+          {visibleManagementMenu.length > 0 && (
+            <div>
+              <h3 className="mb-2 px-3 text-xs font-semibold uppercase text-gray-500">
+                Management
+              </h3>
 
-            <nav className="space-y-1">
-              {managementMenu.map((item) => {
-                const Icon = item.icon;
+              <nav className="space-y-1">
+                {visibleManagementMenu.map((item) => {
+                  const Icon = item.icon;
 
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={navItemClass}
-                    onClick={onClose}
-                  >
-                    <Icon size={18} />
-                    <span>{item.name}</span>
-                  </NavLink>
-                );
-              })}
-            </nav>
-          </div>
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      className={navItemClass}
+                      onClick={onClose}
+                    >
+                      <Icon size={18} />
+                      <span>{item.name}</span>
+                    </NavLink>
+                  );
+                })}
+              </nav>
+            </div>
+          )}
         </div>
 
         {/* Bottom Section */}
@@ -155,11 +167,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
           </h3>
 
           <nav className="space-y-1">
-            <NavLink
-              to="/account"
-              className={navItemClass}
-              onClick={onClose}
-            >
+            <NavLink to="/account" className={navItemClass} onClick={onClose}>
               <Settings size={18} />
               <span>Account</span>
             </NavLink>

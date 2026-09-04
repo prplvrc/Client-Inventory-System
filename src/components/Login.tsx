@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/denberts-logo.png";
-import { API_URL } from "../services/api";
+import { apiRequest } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
 
 interface LoginResponse {
   message: string;
@@ -18,6 +19,7 @@ interface LoginResponse {
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,60 +28,57 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (
-    event: React.FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError("");
+    setResetMessage("");
+    setResetLoading(true);
+
+    try {
+      await apiRequest("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email: resetEmail.trim() }),
+      });
+
+      setResetMessage("Password reset instructions have been sent to your email.");
+    } catch (err) {
+      console.error("Forgot password error:", err);
+      setResetError(
+        err instanceof Error ? err.message : "Unable to send reset email. Please try again."
+      );
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-
-      if (!API_URL) {
-        throw new Error("VITE_API_URL is not configured.");
-      }
-
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const result = await apiRequest<LoginResponse>("/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           email: email.trim(),
           password,
         }),
       });
 
-      const result: LoginResponse = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Login failed.");
-      }
-
-      // Make sure the backend returned a user
       if (!result.user || !result.user.id) {
         throw new Error("Invalid login response from server.");
       }
 
-      // ========================================
-      // SAVE LOGGED-IN USER
-      // ========================================
-      localStorage.setItem("user", JSON.stringify(result.user));
-
-      // Optional: save remember-me preference
-      localStorage.setItem(
-        "rememberMe",
-        JSON.stringify(rememberMe)
-      );
-
-      console.log("Login successful:", result.user);
-
-      // Go to dashboard
+      login(result.user, rememberMe);
       navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
-
       if (err instanceof Error) {
         setError(err.message);
       } else {
@@ -88,10 +87,6 @@ function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleLogin = () => {
-    console.log("Continue with Google");
   };
 
   return (
@@ -103,7 +98,6 @@ function Login() {
       }}
     >
       <div className="w-full max-w-sm rounded-2xl border border-[#E3DEA8]/60 bg-[#F0EBB7] p-8 shadow-xl">
-
         {/* HEADER */}
         <div className="mb-6 -mt-2 flex flex-col items-center">
           <img
@@ -111,14 +105,10 @@ function Login() {
             alt="Denbert's Logo"
             className="mb-1 h-16 w-auto object-contain"
           />
-
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
             Login
           </h1>
-
-          <p className="mt-1 text-xs text-gray-700">
-            Sign in to continue
-          </p>
+          <p className="mt-1 text-xs text-gray-700">Sign in to continue</p>
         </div>
 
         {/* ERROR MESSAGE */}
@@ -129,7 +119,6 @@ function Login() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-
           {/* EMAIL */}
           <div>
             <label
@@ -138,7 +127,6 @@ function Login() {
             >
               Email
             </label>
-
             <input
               type="email"
               id="email"
@@ -160,7 +148,6 @@ function Login() {
             >
               Password
             </label>
-
             <input
               type="password"
               id="password"
@@ -184,21 +171,16 @@ function Login() {
                 type="checkbox"
                 id="rememberMe"
                 checked={rememberMe}
-                onChange={(event) =>
-                  setRememberMe(event.target.checked)
-                }
+                onChange={(event) => setRememberMe(event.target.checked)}
                 disabled={loading}
                 className="h-4 w-4 cursor-pointer rounded border-gray-400 accent-black"
               />
-
               Remember me
             </label>
 
             <button
               type="button"
-              onClick={() =>
-                console.log("Forgot password")
-              }
+              onClick={() => setShowForgotPassword(true)}
               disabled={loading}
               className="text-xs font-medium text-gray-900 hover:underline focus:outline-none disabled:cursor-not-allowed"
             >
@@ -214,54 +196,70 @@ function Login() {
           >
             {loading ? "Signing In..." : "Sign In"}
           </button>
-
-          {/* DIVIDER */}
-          <div className="relative my-4 flex items-center justify-center">
-            <div className="w-full border-t border-gray-400/40" />
-
-            <span className="absolute bg-[#F0EBB7] px-2 text-xs text-gray-600">
-              or
-            </span>
-          </div>
-
-          {/* GOOGLE BUTTON */}
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-400 bg-white py-2.5 text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                fill="#4285F4"
-                d="M21.35 12.27c0-.72-.06-1.42-.18-2.09H12v3.96h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.26Z"
-              />
-
-              <path
-                fill="#34A853"
-                d="M12 21.5c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.5Z"
-              />
-
-              <path
-                fill="#FBBC05"
-                d="M6.54 13.59a5.86 5.86 0 0 1 0-3.18V7.88H3.3a9.5 9.5 0 0 0 0 8.24l3.24-2.53Z"
-              />
-
-              <path
-                fill="#EA4335"
-                d="M12 6.38c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.84 3.48 14.63 2.5 12 2.5a9.74 9.74 0 0 0-8.7 5.38l3.24 2.53C7.31 8.1 9.46 6.38 12 6.38Z"
-              />
-            </svg>
-
-            Continue with Google
-          </button>
         </form>
       </div>
+
+      {/* FORGOT PASSWORD MODAL */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg">
+            <h2 className="text-lg font-bold text-gray-900">Reset Password</h2>
+            <p className="mt-1 text-xs text-gray-600">
+              Enter your email address and we'll send you instructions to reset your password.
+            </p>
+
+            {resetError && (
+              <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-600">
+                {resetError}
+              </div>
+            )}
+
+            {resetMessage && (
+              <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-700">
+                {resetMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleForgotPasswordSubmit} className="mt-4 space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-800">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="denberts@gmail.com"
+                  required
+                  disabled={resetLoading}
+                  className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setResetMessage("");
+                    setResetError("");
+                  }}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="rounded-md bg-black px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:bg-gray-500"
+                >
+                  {resetLoading ? "Sending..." : "Send Reset Link"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

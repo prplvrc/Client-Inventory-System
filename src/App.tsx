@@ -12,32 +12,41 @@ import PoS from "./components/PoS";
 import AuditLogs from "./components/AuditLogs";
 import Account from "./components/Account";
 import Categories from "./components/Categories";
+import { AuthProvider } from "./context/authContext";
+import ProtectedRoute from "./routes/protectedRoutes";
+import AdminRoute from "./routes/adminRoute";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Route */}
-        <Route path="/login" element={<Login />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Route */}
+          <Route path="/login" element={<Login />} />
 
-        {/* Authenticated App Routes */}
-        <Route element={<Layout />}>
-          <Route path="/pos" element={<PoS />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/sales" element={<Sales />} />
-          <Route path="/recommendation" element={<Recommendation />} />
-          <Route path="/forecasting" element={<Forecasting />} />
-          <Route path="/audit-logs" element={<AuditLogs />} />
-          <Route path="/account" element={<Account />} />
-        </Route>
+          {/* Authenticated App Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+            <Route path="/pos" element={<PoS />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/sales" element={<Sales />} />
+            <Route path="/recommendation" element={<Recommendation />} />
+            <Route path="/forecasting" element={<Forecasting />} />
+            <Route path="/account" element={<Account />} />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+            {/* Admin Routes */}
+            <Route path="/audit-logs" element={<AuditLogs />} />
+            </Route>
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
