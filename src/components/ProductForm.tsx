@@ -92,11 +92,7 @@ function ProductForm({
   const [error, setError] = useState("");
 
   const isEditing = Boolean(product);
-
-  // ========================================
   // Fetch categories
-  // ========================================
-
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -160,11 +156,7 @@ function ProductForm({
 
     fetchCategories();
   }, [API_URL, product]);
-
-  // ========================================
   // Fetch ingredients
-  // ========================================
-
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
@@ -208,11 +200,7 @@ function ProductForm({
 
     fetchIngredients();
   }, [API_URL]);
-
-  // ========================================
   // Fetch product details when editing
-  // ========================================
-
   useEffect(() => {
     if (!product) {
       setLoadingProduct(false);
@@ -278,11 +266,7 @@ function ProductForm({
 
     fetchProductDetails();
   }, [API_URL, product?.id]);
-
-  // ========================================
   // Add recipe item
-  // ========================================
-
   const addRecipeItem = () => {
     setRecipe((current) => [
       ...current,
@@ -292,11 +276,7 @@ function ProductForm({
       },
     ]);
   };
-
-  // ========================================
   // Update recipe item
-  // ========================================
-
   const updateRecipeItem = (
     index: number,
     field: keyof RecipeItem,
@@ -313,11 +293,7 @@ function ProductForm({
       )
     );
   };
-
-  // ========================================
   // Remove recipe item
-  // ========================================
-
   const removeRecipeItem = (index: number) => {
     setRecipe((current) =>
       current.filter(
@@ -325,11 +301,7 @@ function ProductForm({
       )
     );
   };
-
-  // ========================================
   // Submit
-  // ========================================
-
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
@@ -344,11 +316,7 @@ function ProductForm({
           "VITE_API_URL is not configured."
         );
       }
-
-      // ========================================
       // Product validation
-      // ========================================
-
       if (!productName.trim()) {
         throw new Error(
           "Product name is required."
@@ -377,11 +345,7 @@ function ProductForm({
           "Price cannot be negative."
         );
       }
-
-      // ========================================
       // Recipe validation
-      // ========================================
-
       const seenIngredients = new Set<number>();
 
       for (const item of recipe) {
@@ -507,11 +471,7 @@ function ProductForm({
       setLoading(false);
     }
   };
-
-  // ========================================
   // Available categories
-  // ========================================
-
   const availableCategories =
     categories.filter((category) => {
       if (!isEditing) {
@@ -523,11 +483,7 @@ function ProductForm({
         category.id.toString() === categoryId
       );
     });
-
-  // ========================================
   // Available ingredients for a row
-  // ========================================
-
   const getAvailableIngredients = (
     currentIndex: number
   ) => {
@@ -553,11 +509,7 @@ function ProductForm({
         )
     );
   };
-
-  // ========================================
   // Get selected ingredient
-  // ========================================
-
   const getSelectedIngredient = (
     ingredientId: string
   ) => {
@@ -973,9 +925,7 @@ function ProductForm({
 
           </div>
 
-          {/* ========================================
-              ACTIONS
-          ======================================== */}
+          {/* ACTIONS */}
 
           <div className="mt-6 flex justify-end gap-2 pt-2">
 

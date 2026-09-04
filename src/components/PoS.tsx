@@ -77,10 +77,7 @@ function POS() {
   // Created transaction ID
   const [completedTransactionId, setCompletedTransactionId] =
     useState<number | null>(null);
-
-  // ========================================
   // Get logged-in user
-  // ========================================
   const getLoggedInUser = (): LoggedInUser | null => {
     try {
       const storedUser = localStorage.getItem("user");
@@ -101,10 +98,7 @@ function POS() {
       return null;
     }
   };
-
-  // ========================================
   // Fetch products
-  // ========================================
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -161,10 +155,7 @@ function POS() {
       setLoading(false);
     }
   }, [search, category]);
-
-  // ========================================
   // Real-time clock
-  // ========================================
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
@@ -172,10 +163,7 @@ function POS() {
 
     return () => clearInterval(timer);
   }, []);
-
-  // ========================================
   // Fetch products when search/filter changes
-  // ========================================
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchProducts();
@@ -183,10 +171,7 @@ function POS() {
 
     return () => clearTimeout(timer);
   }, [fetchProducts]);
-
-  // ========================================
   // Categories
-  // ========================================
   const categories = useMemo(() => {
     return Array.from(
       new Set(
@@ -196,10 +181,7 @@ function POS() {
       )
     );
   }, [products]);
-
-  // ========================================
   // Add product to cart
-  // ========================================
   const addToCart = (product: Product) => {
     setCart((currentCart) => {
       const existingItem = currentCart.find(
@@ -229,10 +211,7 @@ function POS() {
     setSuccessMessage("");
     setPaymentError("");
   };
-
-  // ========================================
   // Increase quantity
-  // ========================================
   const increaseQuantity = (id: number) => {
     setCart((currentCart) =>
       currentCart.map((item) =>
@@ -245,10 +224,7 @@ function POS() {
       )
     );
   };
-
-  // ========================================
   // Decrease quantity
-  // ========================================
   const decreaseQuantity = (id: number) => {
     setCart((currentCart) =>
       currentCart
@@ -263,19 +239,13 @@ function POS() {
         .filter((item) => item.quantity > 0)
     );
   };
-
-  // ========================================
   // Remove item
-  // ========================================
   const removeFromCart = (id: number) => {
     setCart((currentCart) =>
       currentCart.filter((item) => item.id !== id)
     );
   };
-
-  // ========================================
   // Calculate subtotal
-  // ========================================
   const subtotal = useMemo(() => {
     return cart.reduce(
       (total, item) =>
@@ -283,28 +253,19 @@ function POS() {
       0
     );
   }, [cart]);
-
-  // ========================================
   // Total items
-  // ========================================
   const totalItems = useMemo(() => {
     return cart.reduce(
       (total, item) => total + item.quantity,
       0
     );
   }, [cart]);
-
-  // ========================================
   // Reset search/category
-  // ========================================
   const handleReset = () => {
     setSearch("");
     setCategory("");
   };
-
-  // ========================================
   // Open payment modal
-  // ========================================
   const handleProceedToPayment = () => {
     if (cart.length === 0) {
       return;
@@ -316,10 +277,7 @@ function POS() {
     setCompletedTransactionId(null);
     setShowPaymentModal(true);
   };
-
-  // ========================================
   // Confirm payment
-  // ========================================
   const handleConfirmPayment = async () => {
     try {
       setProcessingPayment(true);
@@ -402,9 +360,7 @@ function POS() {
 
   return (
     <div className="w-full p-4 sm:p-6">
-      {/* ========================================
-          HEADER
-      ======================================== */}
+      {/* HEADER */}
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="pl-12 lg:pl-0">
           <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
@@ -435,9 +391,7 @@ function POS() {
         </div>
       </div>
 
-      {/* ========================================
-          SUCCESS MESSAGE
-      ======================================== */}
+      {/* SUCCESS MESSAGE */}
       {successMessage && (
         <div className="mb-4 flex items-start gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-xs text-green-700">
           <CheckCircle
@@ -463,9 +417,7 @@ function POS() {
         </div>
       )}
 
-      {/* ========================================
-          ERROR
-      ======================================== */}
+      {/* ERROR */}
       {error && (
         <div className="mb-4 flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
           <AlertCircle size={14} />
@@ -473,13 +425,9 @@ function POS() {
         </div>
       )}
 
-      {/* ========================================
-          MAIN POS LAYOUT
-      ======================================== */}
+      {/* MAIN POS LAYOUT */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {/* ========================================
-            PRODUCTS
-        ======================================== */}
+        {/* PRODUCTS */}
         <div className="lg:col-span-2">
           {/* SEARCH + FILTER */}
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -595,9 +543,7 @@ function POS() {
           )}
         </div>
 
-        {/* ========================================
-            SHOPPING CART
-        ======================================== */}
+        {/* SHOPPING CART */}
         <div className="lg:col-span-1">
           <div className="sticky top-4 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
             {/* CART HEADER */}
@@ -749,9 +695,7 @@ function POS() {
         </div>
       </div>
 
-      {/* ========================================
-          PAYMENT MODAL
-      ======================================== */}
+      {/* PAYMENT MODAL */}
       {showPaymentModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
@@ -912,10 +856,7 @@ function POS() {
     </div>
   );
 }
-
-// ========================================
 // PRODUCT CARD SKELETON
-// ========================================
 function ProductCardSkeleton() {
   return (
     <div

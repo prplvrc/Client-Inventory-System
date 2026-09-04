@@ -55,11 +55,7 @@ function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // =========================
-  // REAL-TIME CLOCK
-  // =========================
-
+  // Update the clock.
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
@@ -67,11 +63,7 @@ function Dashboard() {
 
     return () => clearInterval(timer);
   }, []);
-
-  // =========================
-  // FETCH DASHBOARD
-  // =========================
-
+  // Load dashboard data.
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
@@ -105,11 +97,7 @@ function Dashboard() {
 
     fetchDashboard();
   }, []);
-
-  // =========================
-  // DEFAULT VALUES
-  // =========================
-
+  // Use empty metrics while loading.
   const metrics = dashboard?.metrics ?? {
     todaySales: 0,
     transactions: 0,
@@ -119,9 +107,7 @@ function Dashboard() {
 
   return (
     <div className="w-full p-4 sm:p-6">
-      {/* =========================
-          HEADER
-      ========================= */}
+      {/* Header */}
 
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="pl-12 lg:pl-0">
@@ -153,9 +139,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* =========================
-          ERROR
-      ========================= */}
+      {/* Error */}
 
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
@@ -163,9 +147,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* =========================
-          METRICS
-      ========================= */}
+      {/* Metrics */}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -199,14 +181,10 @@ function Dashboard() {
         />
       </div>
 
-      {/* =========================
-          MAIN DASHBOARD
-      ========================= */}
+      {/* Main dashboard */}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* =========================
-            SALES OVERVIEW
-        ========================= */}
+        {/* Sales overview */}
 
         <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-6">
           <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
@@ -222,9 +200,7 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* =========================
-            INVENTORY ALERT
-        ========================= */}
+        {/* Inventory alerts */}
 
         <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-3">
           <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
@@ -260,9 +236,7 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* =========================
-            TOP SELLING PRODUCTS
-        ========================= */}
+        {/* Top-selling products */}
 
         <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-3">
           <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
@@ -278,9 +252,7 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* =========================
-            RECOMMENDATIONS
-        ========================= */}
+        {/* Recommendations */}
 
         <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-12">
           <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
@@ -325,9 +297,7 @@ function Dashboard() {
   );
 }
 
-/* =========================================================
-   METRIC CARD
-========================================================= */
+/* Metric card */
 
 function MetricCard({
   value,
@@ -428,9 +398,7 @@ function RecommendationsSkeleton() {
   );
 }
 
-/* =========================================================
-   SALES OVERVIEW CHART
-========================================================= */
+/* Sales overview chart */
 
 function SalesOverviewChart({ data }: { data: SalesOverview[] }) {
   const width = 600;
@@ -490,9 +458,7 @@ function SalesOverviewChart({ data }: { data: SalesOverview[] }) {
   );
 }
 
-/* =========================================================
-   TOP SELLING PRODUCTS PIE CHART
-========================================================= */
+/* Top-selling products chart */
 
 function TopProductsChart({ data }: { data: TopSellingProduct[] }) {
   const total = data.reduce((sum, item) => sum + item.quantity, 0);
@@ -547,9 +513,7 @@ function TopProductsChart({ data }: { data: TopSellingProduct[] }) {
   );
 }
 
-/* =========================================================
-   PIE CHART HELPER
-========================================================= */
+/* Pie chart helper */
 
 function createPieSlice(
   centerX: number,

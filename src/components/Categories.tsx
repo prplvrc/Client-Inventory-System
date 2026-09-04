@@ -38,11 +38,7 @@ function Categories() {
 
     return () => clearInterval(timer);
   }, []);
-
-  // ===============================
   // Fetch Categories
-  // ===============================
-
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -77,29 +73,17 @@ function Categories() {
   useEffect(() => {
     fetchCategories();
   }, []);
-
-  // ===============================
   // Add Category
-  // ===============================
-
   const handleAdd = () => {
     setSelectedCategory(null);
     setShowForm(true);
   };
-
-  // ===============================
   // Edit Category
-  // ===============================
-
   const handleEdit = (category: Category) => {
     setSelectedCategory(category);
     setShowForm(true);
   };
-
-  // ===============================
   // Delete Category
-  // ===============================
-
   const handleDelete = async (id: number) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this category?"
@@ -142,11 +126,7 @@ function Categories() {
       );
     }
   };
-
-  // ===============================
   // Search
-  // ===============================
-
   const filteredCategories = categories.filter((category) =>
     category.name
       .toLowerCase()

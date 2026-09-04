@@ -63,11 +63,7 @@ function Inventory() {
   const [dateTime, setDateTime] = useState(new Date());
 
   const limit = 10;
-
-  // ===============================
   // Real-time Clock
-  // ===============================
-
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
@@ -75,11 +71,7 @@ function Inventory() {
 
     return () => clearInterval(timer);
   }, []);
-
-  // ===============================
   // Debounce Filters
-  // ===============================
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -89,11 +81,7 @@ function Inventory() {
 
     return () => clearTimeout(timer);
   }, [search, unit, status]);
-
-  // ===============================
   // Fetch Inventory
-  // ===============================
-
   const fetchInventory = async () => {
     try {
       setLoading(true);
@@ -162,29 +150,17 @@ function Inventory() {
     debouncedUnit,
     debouncedStatus,
   ]);
-
-  // ===============================
   // Add Inventory
-  // ===============================
-
   const handleAdd = () => {
     setSelectedInventory(null);
     setShowForm(true);
   };
-
-  // ===============================
   // Edit Inventory
-  // ===============================
-
   const handleEdit = (item: InventoryItem) => {
     setSelectedInventory(item);
     setShowForm(true);
   };
-
-  // ===============================
   // Delete Inventory
-  // ===============================
-
   const handleDelete = async (id: number) => {
     if (
       !window.confirm(
@@ -232,22 +208,14 @@ function Inventory() {
       );
     }
   };
-
-  // ===============================
   // Reset Filters
-  // ===============================
-
   const handleReset = () => {
     setSearch("");
     setUnit("");
     setStatus("");
     setPage(1);
   };
-
-  // ===============================
   // Stock Level
-  // ===============================
-
   const getStockLevel = (stock: number) => {
     if (stock <= 0) {
       return "OUT OF STOCK";

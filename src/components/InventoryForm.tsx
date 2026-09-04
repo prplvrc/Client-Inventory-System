@@ -51,11 +51,7 @@ function InventoryForm({
   const [loadingIngredients, setLoadingIngredients] = useState(true);
 
   const [error, setError] = useState("");
-
-  // ========================================
   // NEW INGREDIENT STATES
-  // ========================================
-
   const [showAddIngredient, setShowAddIngredient] = useState(false);
 
   const [newIngredientName, setNewIngredientName] = useState("");
@@ -66,11 +62,7 @@ function InventoryForm({
   const [ingredientError, setIngredientError] = useState("");
 
   const isEditing = Boolean(inventory);
-
-  // ========================================
   // Fetch Ingredients
-  // ========================================
-
   const fetchIngredients = async () => {
     try {
       setLoadingIngredients(true);
@@ -105,11 +97,7 @@ function InventoryForm({
   useEffect(() => {
     fetchIngredients();
   }, [API_URL]);
-
-  // ========================================
   // Add New Ingredient
-  // ========================================
-
   const handleCreateIngredient = async () => {
     try {
       setCreatingIngredient(true);
@@ -184,11 +172,7 @@ function InventoryForm({
       setCreatingIngredient(false);
     }
   };
-
-  // ========================================
   // Submit Inventory
-  // ========================================
-
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
@@ -278,20 +262,12 @@ function InventoryForm({
       setLoading(false);
     }
   };
-
-  // ========================================
   // Selected Ingredient
-  // ========================================
-
   const selectedIngredient = ingredients.find(
     (ingredient) =>
       ingredient.id === Number(ingredientId)
   );
-
-  // ========================================
   // Render
-  // ========================================
-
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
 
