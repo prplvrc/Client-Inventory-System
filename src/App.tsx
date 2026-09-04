@@ -27,18 +27,20 @@ function App() {
           {/* Authenticated App Routes */}
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
-            <Route path="/pos" element={<PoS />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/sales" element={<Sales />} />
-            <Route path="/recommendation" element={<Recommendation />} />
-            <Route path="/forecasting" element={<Forecasting />} />
-            <Route path="/account" element={<Account />} />
+              <Route path="/pos" element={<PoS />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/account" element={<Account />} />
 
-            {/* Admin Routes */}
-            <Route path="/audit-logs" element={<AuditLogs />} />
+              {/* Admin Routes */}
+              <Route element={<AdminRoute />}>
+                <Route path="/audit-logs" element={<AuditLogs />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/sales" element={<Sales />} />
+                <Route path="/recommendation" element={<Recommendation />} />
+                <Route path="/forecasting" element={<Forecasting />} />
+              </Route>
             </Route>
           </Route>
 
