@@ -14,6 +14,12 @@ interface LoginResponse {
     lastName: string;
     role: "ADMIN" | "STAFF";
     status: "ACTIVE" | "INACTIVE";
+
+    branch: {
+    id: number;
+    code: "BRANCH_1" | "BRANCH_2";
+    name: string;
+  };
   };
 }
 

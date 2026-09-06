@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BranchProvider } from "./context/branchContext";
 
 import Layout from "./components/Layout";
 import Login from "./components/Login";
@@ -19,35 +20,37 @@ import AdminRoute from "./routes/adminRoute";
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Route */}
-          <Route path="/login" element={<Login />} />
+      <BranchProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Route */}
+            <Route path="/login" element={<Login />} />
 
-          {/* Authenticated App Routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<Layout />}>
-              <Route path="/pos" element={<PoS />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/account" element={<Account />} />
+            {/* Authenticated App Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<Layout />}>
+                <Route path="/pos" element={<PoS />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/account" element={<Account />} />
 
-              {/* Admin Routes */}
-              <Route element={<AdminRoute />}>
-                <Route path="/audit-logs" element={<AuditLogs />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/sales" element={<Sales />} />
-                <Route path="/recommendation" element={<Recommendation />} />
-                <Route path="/forecasting" element={<Forecasting />} />
+                {/* Admin Routes */}
+                <Route element={<AdminRoute />}>
+                  <Route path="/audit-logs" element={<AuditLogs />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/sales" element={<Sales />} />
+                  <Route path="/recommendation" element={<Recommendation />} />
+                  <Route path="/forecasting" element={<Forecasting />} />
+                </Route>
               </Route>
             </Route>
-          </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </BranchProvider>
     </AuthProvider>
   );
 }

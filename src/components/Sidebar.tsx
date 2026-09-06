@@ -16,6 +16,7 @@ import {
 
 import Logo from "../assets/denberts-logo.png";
 import { useAuth } from "../hooks/useAuth";
+import { useBranch } from "../hooks/useBranch";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -25,6 +26,7 @@ type SidebarProps = {
 function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { branches, selectedBranchId, setSelectedBranchId } = useBranch();
 
   const isAdmin = user?.role === "ADMIN";
 
@@ -103,6 +105,45 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             <X size={20} />
           </button>
+        </div>
+
+        <div className="border-b border-black/10 p-3">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+            Operating Branch
+          </p>
+
+          {isAdmin ? (
+            <select
+              value={selectedBranchId}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                setSelectedBranchId(
+                  value === "ALL"
+                    ? "ALL"
+                    : Number(value)
+                );
+              }}
+              className="w-full rounded-md border border-black/20 bg-white px-2 py-2 text-xs font-semibold text-gray-800"
+            >
+              <option value="ALL">
+                All Branches
+              </option>
+
+              {branches.map((branch) => (
+                <option
+                  key={branch.id}
+                  value={branch.id}
+                >
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="rounded-md border border-black/10 bg-white/60 px-3 py-2 text-xs font-semibold text-gray-800">
+              {user?.branch.name}
+            </div>
+          )}
         </div>
 
         {/* Navigation */}

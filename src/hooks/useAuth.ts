@@ -7,6 +7,12 @@ export interface User {
   email: string;
   username: string;
   role: "ADMIN" | "STAFF";
+
+  branch: {
+    id: number;
+    code: "BRANCH_1" | "BRANCH_2";
+    name: string;
+  };
 }
 
 interface AuthContextType {
