@@ -9,7 +9,7 @@ import {
   CircleDollarSign,
 } from "lucide-react";
 import { API_URL } from "../services/api";
-
+import { useAuth } from "../hooks/useAuth";
 interface DashboardMetrics {
   todaySales: number;
   transactions: number;
