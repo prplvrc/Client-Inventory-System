@@ -4,13 +4,13 @@ import {
   AlertTriangle,
   Info,
   TrendingUp,
-  Receipt,
+  ArrowLeftRight,
   ShoppingBag,
-  CircleDollarSign,
+  Calculator,
 } from "lucide-react";
 import { API_URL } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
-import { useBranch } from "../hooks/useBranch";
+
 interface DashboardMetrics {
   todaySales: number;
   transactions: number;
@@ -50,14 +50,11 @@ interface DashboardResponse {
 }
 
 function Dashboard() {
-  const { selectedBranchId } = useBranch();
-
   const [dateTime, setDateTime] = useState(new Date());
-
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   // Update the clock.
   useEffect(() => {
     const timer = setInterval(() => {
@@ -66,6 +63,7 @@ function Dashboard() {
 
     return () => clearInterval(timer);
   }, []);
+
   // Load dashboard data.
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -77,23 +75,12 @@ function Dashboard() {
           throw new Error("VITE_API_URL is not configured.");
         }
 
-        const params = new URLSearchParams();
-        if (selectedBranchId !== "ALL") {
-          params.append(
-            "branchId",
-            String(selectedBranchId)
-          );
-        }
-
-        const response = await fetch(
-          `${API_URL}/dashboard?${params.toString()}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch(`${API_URL}/dashboard`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
         if (!response.ok) {
           throw new Error(`Failed to fetch dashboard: ${response.status}`);
@@ -110,7 +97,8 @@ function Dashboard() {
     };
 
     fetchDashboard();
-  }, [selectedBranchId]);
+  }, []);
+
   // Use empty metrics while loading.
   const metrics = dashboard?.metrics ?? {
     todaySales: 0,
@@ -122,13 +110,11 @@ function Dashboard() {
   return (
     <div className="w-full p-4 sm:p-6">
       {/* Header */}
-
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="pl-12 lg:pl-0">
           <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
             Dashboard
           </h1>
-
           <p className="text-xs text-gray-500">
             Good Day, Admin! Here is today's overview.
           </p>
@@ -143,7 +129,6 @@ function Dashboard() {
               year: "numeric",
             })}
           </span>
-
           <span>
             TIME:{" "}
             {dateTime.toLocaleTimeString("en-US", {
@@ -154,7 +139,6 @@ function Dashboard() {
       </div>
 
       {/* Error */}
-
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
           {error}
@@ -162,7 +146,6 @@ function Dashboard() {
       )}
 
       {/* Metrics */}
-
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           value={metrics.todaySales}
@@ -175,7 +158,7 @@ function Dashboard() {
         <MetricCard
           value={metrics.transactions}
           label="Transactions"
-          icon={<Receipt size={18} className="text-gray-500" />}
+          icon={<ArrowLeftRight size={18} className="text-gray-500" />}
           loading={loading}
         />
 
@@ -190,21 +173,18 @@ function Dashboard() {
           value={metrics.averageTransaction}
           label="Average Transaction"
           prefix="₱"
-          icon={<CircleDollarSign size={18} className="text-gray-500" />}
+          icon={<Calculator size={18} className="text-gray-500" />}
           loading={loading}
         />
       </div>
 
       {/* Main dashboard */}
-
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Sales overview */}
-
         <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-6">
           <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
             Sales Overview
           </div>
-
           <div className="p-4">
             {loading ? (
               <SalesOverviewSkeleton />
@@ -215,12 +195,10 @@ function Dashboard() {
         </section>
 
         {/* Inventory alerts */}
-
         <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-3">
           <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
             Inventory Alerts
           </div>
-
           <div className="p-4 min-h-57.5">
             {loading ? (
               <InventoryAlertsSkeleton />
@@ -235,7 +213,6 @@ function Dashboard() {
                       <AlertTriangle size={14} className="shrink-0 text-red-600" />
                       <span className="font-medium text-gray-800">{item.ingredient}</span>
                     </div>
-
                     <span className="font-bold text-red-600">
                       {item.currentStock} {item.unit || ""}
                     </span>
@@ -251,12 +228,10 @@ function Dashboard() {
         </section>
 
         {/* Top-selling products */}
-
         <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-3">
           <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
             Top Selling Products
           </div>
-
           <div className="p-4 min-h-57.5 flex items-center justify-center">
             {loading ? (
               <TopProductsSkeleton />
@@ -267,12 +242,10 @@ function Dashboard() {
         </section>
 
         {/* Recommendations */}
-
         <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm lg:col-span-12">
           <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
             Recommendations
           </div>
-
           <div className="p-4">
             {loading ? (
               <RecommendationsSkeleton />
@@ -286,15 +259,12 @@ function Dashboard() {
                     {item.type === "prepare" && (
                       <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-500" />
                     )}
-
                     {item.type === "restock" && (
                       <AlertTriangle size={15} className="mt-0.5 shrink-0 text-red-500" />
                     )}
-
                     {item.type === "info" && (
                       <Info size={15} className="mt-0.5 shrink-0 text-blue-500" />
                     )}
-
                     <span>{item.message}</span>
                   </div>
                 ))}
@@ -312,7 +282,6 @@ function Dashboard() {
 }
 
 /* Metric card */
-
 function MetricCard({
   value,
   label,
@@ -347,10 +316,8 @@ function MetricCard({
                 maximumFractionDigits: prefix ? 2 : 0,
               })}
             </p>
-
             <p className="mt-1 text-xs text-gray-500 font-medium">{label}</p>
           </div>
-
           {icon && <div className="rounded-full bg-gray-50 p-2.5 border border-gray-100">{icon}</div>}
         </div>
       )}
@@ -376,7 +343,10 @@ function InventoryAlertsSkeleton() {
     <div className="space-y-2.5" role="status">
       {Array.from({ length: 4 }, (_, index) => (
         <div key={index} className="flex items-center justify-between rounded-md border border-gray-100 bg-gray-50/70 p-2.5">
-          <div className="flex items-center gap-2"><Skeleton className="h-3.5 w-3.5 rounded-full" /><Skeleton className="h-3 w-20" /></div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-3.5 w-3.5 rounded-full" />
+            <Skeleton className="h-3 w-20" />
+          </div>
           <Skeleton className="h-3 w-9" />
         </div>
       ))}
@@ -391,7 +361,10 @@ function TopProductsSkeleton() {
       <div
         aria-hidden="true"
         className="h-37.5 w-37.5 animate-pulse rounded-full"
-        style={{ background: "conic-gradient(#d1d5db 0deg 105deg, #e5e7eb 105deg 180deg, #cbd5e1 180deg 245deg, #e5e7eb 245deg 305deg, #d1d5db 305deg 360deg)" }}
+        style={{
+          background:
+            "conic-gradient(#d1d5db 0deg 105deg, #e5e7eb 105deg 180deg, #cbd5e1 180deg 245deg, #e5e7eb 245deg 305deg, #d1d5db 305deg 360deg)",
+        }}
       />
       <span className="sr-only">Loading top products chart...</span>
     </div>
@@ -404,7 +377,10 @@ function RecommendationsSkeleton() {
       {Array.from({ length: 3 }, (_, index) => (
         <div key={index} className="flex items-start gap-2.5 rounded-md border border-gray-100 bg-gray-50/70 p-3">
           <Skeleton className="mt-0.5 h-4 w-4 shrink-0 rounded-full" />
-          <div className="flex-1 space-y-2"><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-2/3" /></div>
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-2/3" />
+          </div>
         </div>
       ))}
       <span className="sr-only">Loading recommendations...</span>
@@ -413,7 +389,6 @@ function RecommendationsSkeleton() {
 }
 
 /* Sales overview chart */
-
 function SalesOverviewChart({ data }: { data: SalesOverview[] }) {
   const width = 600;
   const height = 200;
@@ -455,7 +430,6 @@ function SalesOverviewChart({ data }: { data: SalesOverview[] }) {
               rx="4"
               className="fill-gray-800 hover:fill-gray-600 transition"
             />
-
             <text
               x={x + barWidth / 2}
               y={height - 10}
@@ -473,7 +447,6 @@ function SalesOverviewChart({ data }: { data: SalesOverview[] }) {
 }
 
 /* Top-selling products chart */
-
 function TopProductsChart({ data }: { data: TopSellingProduct[] }) {
   const total = data.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -528,7 +501,6 @@ function TopProductsChart({ data }: { data: TopSellingProduct[] }) {
 }
 
 /* Pie chart helper */
-
 function createPieSlice(
   centerX: number,
   centerY: number,
