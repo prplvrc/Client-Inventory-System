@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { API_URL } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
+import { useBranch } from "../hooks/useBranch";
 interface DashboardMetrics {
   todaySales: number;
   transactions: number;
@@ -49,6 +50,8 @@ interface DashboardResponse {
 }
 
 function Dashboard() {
+  const { selectedBranchId } = useBranch();
+
   const [dateTime, setDateTime] = useState(new Date());
 
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
@@ -74,12 +77,23 @@ function Dashboard() {
           throw new Error("VITE_API_URL is not configured.");
         }
 
-        const response = await fetch(`${API_URL}/dashboard`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const params = new URLSearchParams();
+        if (selectedBranchId !== "ALL") {
+          params.append(
+            "branchId",
+            String(selectedBranchId)
+          );
+        }
+
+        const response = await fetch(
+          `${API_URL}/dashboard?${params.toString()}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`Failed to fetch dashboard: ${response.status}`);
@@ -96,7 +110,7 @@ function Dashboard() {
     };
 
     fetchDashboard();
-  }, []);
+  }, [selectedBranchId]);
   // Use empty metrics while loading.
   const metrics = dashboard?.metrics ?? {
     todaySales: 0,

@@ -123,11 +123,11 @@ function Inventory() {
         params.append("status", debouncedStatus.trim());
       }
 
+      // Only send branchId when a specific branch is selected
       if (selectedBranchId && selectedBranchId !== "ALL") {
         params.append("branchId", String(selectedBranchId));
       }
 
-      params.append("branchId", String(selectedBranchId));
       params.append("page", String(page));
       params.append("limit", String(limit));
 
@@ -142,9 +142,16 @@ function Inventory() {
       );
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch inventory: ${response.status}`
-        );
+        let message = `Failed to fetch inventory: ${response.status}`;
+
+        try {
+          const result = await response.json();
+          message = result.message || message;
+        } catch {
+          // Response was not JSON
+        }
+
+        throw new Error(message);
       }
 
       const result: InventoryResponse = await response.json();
@@ -155,6 +162,7 @@ function Inventory() {
       console.error("Fetch inventory error:", err);
 
       setInventory([]);
+
       setError(
         err instanceof Error
           ? err.message
@@ -176,6 +184,14 @@ function Inventory() {
   ]);
   // Add Inventory
   const handleAdd = () => {
+    if (selectedBranchId === "ALL") {
+      setError(
+        "Select Branch 1 or Branch 2 before adding inventory."
+      );
+
+      return;
+    }
+
     setSelectedInventory(null);
     setShowForm(true);
   };
@@ -410,6 +426,10 @@ function Inventory() {
                   Ingredient
                 </th>
 
+                <th className="px-4 py-2.5 text-center">
+                  Branch
+                </th>
+
                 <th className="border-r border-gray-200 px-4 py-2.5 text-center">
                   Unit
                 </th>
@@ -475,6 +495,11 @@ function Inventory() {
                       {/* INGREDIENT */}
                       <td className="border-r border-gray-200 px-4 py-2.5 font-semibold text-gray-900">
                         {item.ingredient?.name ?? "—"}
+                      </td>
+
+                      {/* BRANCH */}
+                      <td className="px-4 py-2.5 text-center">
+                        {item.branch.name}
                       </td>
 
                       {/* UNIT */}
@@ -593,9 +618,14 @@ function Inventory() {
       </div>
 
       {/* FORM MODAL */}
+
       {showForm && (
         <InventoryForm
           inventory={selectedInventory}
+          branchId={
+            selectedInventory?.branchId ??
+            Number(selectedBranchId)
+          }
           onClose={() => {
             setShowForm(false);
             setSelectedInventory(null);

@@ -20,12 +20,14 @@ interface InventoryItem {
 
 interface InventoryFormProps {
   inventory: InventoryItem | null;
+  branchId: number;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 function InventoryForm({
   inventory,
+  branchId,
   onClose,
   onSuccess,
 }: InventoryFormProps) {
@@ -219,6 +221,7 @@ function InventoryForm({
 
       const inventoryData = {
         ingredientId: Number(ingredientId),
+        branchId,
         initialStock: Number(initialStock),
         availableStock: Number(availableStock),
         status,

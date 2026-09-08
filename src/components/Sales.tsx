@@ -10,6 +10,7 @@ import {
 import TransactionDetailsModal from "../components/TransactionDetailsModal";
 import { TableSkeleton } from "./LoadingSkeleton";
 import { API_URL } from "../services/api";
+import { useBranch } from "../hooks/useBranch";
 
 interface SaleRecord {
   id: number;
@@ -18,6 +19,12 @@ interface SaleRecord {
   itemQuantity: number;
   total: number;
   cashier: string;
+
+  branch: {
+    id: number;
+    code: string;
+    name: string;
+  };
 }
 
 interface SalesMetrics {
@@ -36,6 +43,8 @@ interface SalesResponse {
 }
 
 function Sales() {
+  const { selectedBranchId } = useBranch();
+
   const [sales, setSales] = useState<SaleRecord[]>([]);
   const [metrics, setMetrics] = useState<SalesMetrics>({
     totalSales: 0,
@@ -94,6 +103,7 @@ function Sales() {
       if (debouncedCashier.trim()) params.append("cashier", debouncedCashier.trim());
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
+      if (selectedBranchId !== "ALL") {params.append("branchId", String(selectedBranchId));}
 
       params.append("page", String(page));
       params.append("limit", String(limit));
@@ -132,7 +142,7 @@ function Sales() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, debouncedCashier, startDate, endDate, page]);
+  }, [debouncedSearch, debouncedCashier, startDate, endDate, page, selectedBranchId]);
 
   useEffect(() => {
     fetchSales();
@@ -298,6 +308,7 @@ function Sales() {
             <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
               <tr>
                 <th className="w-16 border-r border-gray-200 px-4 py-2.5 text-center">ID</th>
+                <th className="border-r border-gray-200 px-4 py-2.5 text-center">Branch</th>
                 <th className="border-r border-gray-200 px-4 py-2.5 text-center">Date</th>
                 <th className="border-r border-gray-200 px-4 py-2.5 text-center">Time</th>
                 <th className="border-r border-gray-200 px-4 py-2.5 text-center">Item Quantity</th>
@@ -320,6 +331,9 @@ function Sales() {
                   <tr key={item.id} className="transition hover:bg-gray-50/80">
                     <td className="border-r border-gray-200 px-4 py-2.5 text-center font-medium text-gray-500">
                       #{item.id}
+                    </td>
+                    <td className="border-r border-gray-200 px-4 py-2.5 text-center">
+                      {item.branch.name}
                     </td>
                     <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
                       {item.date}
