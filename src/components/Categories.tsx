@@ -236,11 +236,11 @@ function Categories() {
                   ID
                 </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5">
+                <th className="border-r text-center border-gray-200 px-4 py-2.5">
                   Category
                 </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5">
+                <th className="border-r text-center border-gray-200 px-4 py-2.5">
                   Description
                 </th>
 
