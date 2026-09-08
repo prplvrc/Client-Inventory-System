@@ -10,6 +10,7 @@ import {
 import InventoryForm from "./InventoryForm";
 import { TableSkeleton } from "./LoadingSkeleton";
 import { API_URL } from "../services/api";
+import { useBranch } from "../hooks/useBranch";
 
 interface Ingredient {
   id: number;
@@ -21,7 +22,11 @@ interface Ingredient {
 interface InventoryItem {
   id: number;
   ingredientId: number;
+  branchId: number;
+
+  branch: Branch;
   ingredient: Ingredient;
+
   initialStock: number;
   availableStock: number;
   status: string;
@@ -34,6 +39,14 @@ interface InventoryResponse {
   limit: number;
   totalPages: number;
 }
+
+interface Branch {
+  id: number;
+  code: string;
+  name: string;
+}
+
+
 
 function Inventory() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -61,6 +74,11 @@ function Inventory() {
     useState<InventoryItem | null>(null);
 
   const [dateTime, setDateTime] = useState(new Date());
+
+  const {
+  selectedBranchId,
+  selectedBranch,
+} = useBranch();
 
   const limit = 10;
   // Real-time Clock
@@ -105,6 +123,11 @@ function Inventory() {
         params.append("status", debouncedStatus.trim());
       }
 
+      if (selectedBranchId && selectedBranchId !== "ALL") {
+        params.append("branchId", String(selectedBranchId));
+      }
+
+      params.append("branchId", String(selectedBranchId));
       params.append("page", String(page));
       params.append("limit", String(limit));
 
@@ -149,6 +172,7 @@ function Inventory() {
     debouncedSearch,
     debouncedUnit,
     debouncedStatus,
+    selectedBranchId,
   ]);
   // Add Inventory
   const handleAdd = () => {
@@ -252,6 +276,7 @@ function Inventory() {
 
           <p className="text-xs text-gray-500">
             Manage inventory items and keep track of stock levels
+            {selectedBranch ? ` (${selectedBranch.name})` : " (All Branches)"}.
           </p>
         </div>
 

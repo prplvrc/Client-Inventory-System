@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Skeleton } from "./LoadingSkeleton";
 import { API_URL } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
+import { useBranch } from  "../hooks/useBranch";
 
 interface Product {
   id: number;
@@ -35,15 +37,6 @@ interface CartItem extends Product {
   quantity: number;
 }
 
-interface LoggedInUser {
-  id: number;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  status: string;
-}
 
 type PaymentMethod = "CASH" | "GCASH";
 
@@ -58,6 +51,25 @@ function POS() {
   const [error, setError] = useState("");
 
   const [dateTime, setDateTime] = useState(new Date());
+
+  const { user } = useAuth();
+
+  const {
+    selectedBranchId,
+    selectedBranch,
+  } = useBranch();
+
+  const posBranchId =
+  user?.role === "STAFF"
+    ? user.branch.id
+    : selectedBranchId === "ALL"
+    ? null
+    : selectedBranchId;
+
+  const posBranchName =
+  user?.role === "STAFF"
+    ? user.branch.name
+    : selectedBranch?.name ?? null;
 
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -78,31 +90,21 @@ function POS() {
   const [completedTransactionId, setCompletedTransactionId] =
     useState<number | null>(null);
   // Get logged-in user
-  const getLoggedInUser = (): LoggedInUser | null => {
-    try {
-      const storedUser = sessionStorage.getItem("user");
 
-      if (!storedUser) {
-        return null;
-      }
-
-      const user = JSON.parse(storedUser);
-
-      if (!user?.id) {
-        return null;
-      }
-
-      return user;
-    } catch (error) {
-      console.error("Unable to read logged-in user:", error);
-      return null;
-    }
-  };
   // Fetch products
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
+
+      if (!posBranchId) {
+        setProducts([]);
+        setError(
+          "Please select a branch before processing the sale."
+        );
+        setLoading(false);
+        return;
+      }
 
       if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
@@ -112,6 +114,10 @@ function POS() {
 
       params.append("page", "1");
       params.append("limit", "100");
+      params.append(
+        "branchId",
+        String(posBranchId)
+      );
 
       if (search.trim()) {
         params.append("search", search.trim());
@@ -154,7 +160,7 @@ function POS() {
     } finally {
       setLoading(false);
     }
-  }, [search, category]);
+  }, [search, category, posBranchId]);
   // Real-time clock
   useEffect(() => {
     const timer = setInterval(() => {
@@ -163,6 +169,11 @@ function POS() {
 
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    setCart([]);
+  }, [posBranchId]);
+
   // Fetch products when search/filter changes
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -171,6 +182,7 @@ function POS() {
 
     return () => clearTimeout(timer);
   }, [fetchProducts]);
+
   // Categories
   const categories = useMemo(() => {
     return Array.from(
@@ -181,6 +193,7 @@ function POS() {
       )
     );
   }, [products]);
+
   // Add product to cart
   const addToCart = (product: Product) => {
     setCart((currentCart) => {
@@ -288,9 +301,6 @@ function POS() {
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      // Get logged-in user
-      const user = getLoggedInUser();
-
       if (!user) {
         throw new Error(
           "Unable to identify the logged-in user. Please log in again."
@@ -311,6 +321,7 @@ function POS() {
         },
         body: JSON.stringify({
           userId: user.id,
+          branchId: posBranchId,
           paymentMethod,
           items,
         }),
@@ -367,8 +378,11 @@ function POS() {
             Point of Sale
           </h1>
 
-          <p className="text-xs text-gray-500">
-            Process customer orders and manage transactions.
+          <p className="text-xs font-semibold text-gray-600">
+            Operating Branch:{" "}
+            <span className="text-gray-900">
+              {posBranchName ?? "No Branch Selected"}
+            </span>
           </p>
         </div>
 
