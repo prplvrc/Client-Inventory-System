@@ -24,6 +24,11 @@ interface TransactionDetails {
   saleDate: string;
   total: number;
   paymentMethod: string;
+  branch: {
+  id: number;
+  code: string;
+  name: string;
+  };
   cashier: {
     id: number;
     username: string;
@@ -222,6 +227,17 @@ function TransactionDetailsModal({
                       {formattedTime}
                     </span>
                   </div>
+                </div>
+
+                {/* BRANCH */}
+                <div className="col-span-2 rounded-md border border-gray-100 bg-white p-2">
+                  <span className="block text-[10px] uppercase text-gray-400">
+                    Branch
+                  </span>
+
+                  <span className="font-medium text-gray-700">
+                    {transaction.branch.name}
+                  </span>
                 </div>
 
                 {/* CASHIER */}

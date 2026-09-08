@@ -23,6 +23,12 @@ interface Product {
   price: number;
   status: string;
   bom: string | null;
+  stockStatus:
+    | "AVAILABLE"
+    | "LOW_STOCK"
+    | "OUT_OF_STOCK"
+    | null;
+  maxQuantity: number | null;
 }
 
 interface ProductResponse {
@@ -196,6 +202,21 @@ function POS() {
 
   // Add product to cart
   const addToCart = (product: Product) => {
+    const currentQuantity =
+      cart.find((item) => item.id === product.id)
+        ?.quantity ?? 0;
+
+    if (
+      product.maxQuantity !== null &&
+      currentQuantity >= product.maxQuantity
+    ) {
+      setError(
+        `Only ${product.maxQuantity} ${product.product} can currently be prepared at ${posBranchName}.`
+      );
+
+      return;
+    }
+
     setCart((currentCart) => {
       const existingItem = currentCart.find(
         (item) => item.id === product.id
@@ -221,11 +242,29 @@ function POS() {
       ];
     });
 
+    setError("");
     setSuccessMessage("");
     setPaymentError("");
   };
   // Increase quantity
   const increaseQuantity = (id: number) => {
+    const item = cart.find((item) => item.id === id);
+
+    if (!item) {
+      return;
+    }
+
+    if (
+      item.maxQuantity !== null &&
+      item.quantity >= item.maxQuantity
+    ) {
+      setError(
+        `Only ${item.maxQuantity} ${item.product} can currently be prepared at ${posBranchName}.`
+      );
+
+      return;
+    }
+
     setCart((currentCart) =>
       currentCart.map((item) =>
         item.id === id
@@ -236,6 +275,8 @@ function POS() {
           : item
       )
     );
+
+    setError("");
   };
   // Decrease quantity
   const decreaseQuantity = (id: number) => {
@@ -536,6 +577,13 @@ function POS() {
                     ID: #{product.id}
                   </p>
 
+                  {/* AVAILABLE QUANTITY */}
+                  {product.maxQuantity !== null && (
+                    <p className="mt-1 text-[10px] text-gray-500">
+                      Available: {product.maxQuantity}
+                    </p>
+                  )}
+
                   {/* PRICE + ADD */}
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-sm font-bold text-gray-900">
@@ -545,10 +593,17 @@ function POS() {
                     <button
                       type="button"
                       onClick={() => addToCart(product)}
-                      className="flex items-center gap-1 rounded-md border border-[#d6d09b] bg-[#EFEABB] px-3 py-1.5 text-[11px] font-semibold text-gray-900 transition hover:bg-[#e3dc9e]"
+                      disabled={
+                        product.stockStatus === "OUT_OF_STOCK" ||
+                        product.maxQuantity === 0
+                      }
+                      className="flex items-center gap-1 rounded-md border border-[#d6d09b] bg-[#EFEABB] px-3 py-1.5 text-[11px] font-semibold text-gray-900 transition hover:bg-[#e3dc9e] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Plus size={12} />
-                      Add
+
+                      {product.stockStatus === "OUT_OF_STOCK"
+                        ? "Out of Stock"
+                        : "Add"}
                     </button>
                   </div>
                 </div>
