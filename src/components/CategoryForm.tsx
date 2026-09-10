@@ -62,10 +62,17 @@ function CategoryForm({
         ? `${API_URL}/categories/${category.id}`
         : `${API_URL}/categories`;
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
       const response = await fetch(url, {
         method: category ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(categoryData),
       });

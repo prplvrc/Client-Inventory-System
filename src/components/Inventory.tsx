@@ -133,12 +133,19 @@ function Inventory() {
       params.append("page", String(activePage));
       params.append("limit", String(limit));
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
       const response = await fetch(
         `${API_URL}/inventory?${params.toString()}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -219,10 +226,20 @@ function Inventory() {
         throw new Error("VITE_API_URL is not configured.");
       }
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
       const response = await fetch(
         `${API_URL}/inventory/${id}`,
         {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 

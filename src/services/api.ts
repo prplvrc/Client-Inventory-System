@@ -1,6 +1,21 @@
-export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+export const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+
 export const FORECAST_API_URL =
   import.meta.env.VITE_FORECAST_API_URL;
+
+export const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem("token");
+
+  return {
+    "Content-Type": "application/json",
+    ...(token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {}),
+  };
+};
 
 export async function apiRequest<T>(
   endpoint: string,
@@ -9,7 +24,7 @@ export async function apiRequest<T>(
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...getAuthHeaders(),
       ...options?.headers,
     },
   });

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { User, Lock, Save, RefreshCw } from "lucide-react";
 import { Skeleton } from "./LoadingSkeleton";
-import { API_URL } from "../services/api";
+import { API_URL, getAuthHeaders } from "../services/api";
 
 interface AccountData {
   id: number;
@@ -41,9 +41,7 @@ function Account() {
 
       const response = await fetch(`${API_URL}/account`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -81,10 +79,12 @@ function Account() {
 
       const response = await fetch(`${API_URL}/account`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, username }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name,
+          email,
+          username,
+        }),
       });
 
       if (!response.ok) {
@@ -138,10 +138,11 @@ function Account() {
 
       const response = await fetch(`${API_URL}/account/password`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
       });
 
       if (!response.ok) {

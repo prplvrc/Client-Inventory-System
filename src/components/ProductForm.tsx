@@ -104,9 +104,19 @@ function ProductForm({
           );
         }
 
-        const response = await fetch(
-          `${API_URL}/categories`
-        );
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("You are not logged in.");
+        }
+
+        const response = await fetch(`${API_URL}/categories`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error(
@@ -168,9 +178,19 @@ function ProductForm({
           );
         }
 
-        const response = await fetch(
-          `${API_URL}/ingredients`
-        );
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("You are not logged in.");
+        }
+
+        const response = await fetch(`${API_URL}/ingredients`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error(
@@ -217,8 +237,21 @@ function ProductForm({
           );
         }
 
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("You are not logged in.");
+        }
+
         const response = await fetch(
-          `${API_URL}/products/${product.id}`
+          `${API_URL}/products/${product.id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         if (!response.ok) {
@@ -400,13 +433,20 @@ function ProductForm({
         ? `${API_URL}/products/${product.id}`
         : `${API_URL}/products`;
 
-      const response = await fetch(url, {
-        method: product ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(productData),
-      });
+      const token = localStorage.getItem("token");
+
+        if (!token) {
+          throw new Error("You are not logged in.");
+        }
+
+        const response = await fetch(url, {
+          method: product ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(productData),
+        });
 
       const contentType =
         response.headers.get(

@@ -4,6 +4,9 @@ import {
   Info,
 } from "lucide-react";
 import { Skeleton, TableSkeleton } from "./LoadingSkeleton";
+import { FORECAST_API_URL } from "../services/api";
+
+import { useBranch } from "../hooks/useBranch";
 
 interface ResourcePlanning {
   message: string;
@@ -40,6 +43,7 @@ interface RecommendationData {
 }
 
 function Recommendation() {
+  const { selectedBranchId } = useBranch();
   const [dateTime, setDateTime] = useState(new Date());
 
   const [recommendations, setRecommendations] =
@@ -62,13 +66,25 @@ function Recommendation() {
         setLoading(true);
         setError("");
 
-        const API_URL = import.meta.env.VITE_API_URL;
-
-        if (!API_URL) {
-          throw new Error("VITE_API_URL is not configured.");
+        if (selectedBranchId === "ALL") {
+          setRecommendations(null);
+          return;
         }
 
-        const response = await fetch(`${API_URL}/api/recommendations`);
+        if (!FORECAST_API_URL) {
+          throw new Error("VITE_FORECAST_API_URL is not configured.");
+        }
+
+        const params = new URLSearchParams();
+
+        params.append(
+          "branchId",
+          String(selectedBranchId)
+        );
+
+        const response = await fetch(
+          `${FORECAST_API_URL}/recommendations?${params.toString()}`
+        );
 
         if (!response.ok) {
           throw new Error("Failed to fetch recommendations.");
@@ -86,8 +102,8 @@ function Recommendation() {
     };
 
     fetchRecommendations();
-  }, []);
-
+  }, [selectedBranchId]);
+  
   return (
     <div className="w-full p-4 sm:p-6">
       {/* HEADER */}

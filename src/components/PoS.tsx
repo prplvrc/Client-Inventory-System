@@ -133,12 +133,19 @@ function POS() {
         params.append("category", category.trim());
       }
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
       const response = await fetch(
         `${API_URL}/products?${params.toString()}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -355,10 +362,18 @@ function POS() {
       }));
 
       // Send sale to backend
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
+      // Send sale to backend
       const response = await fetch(`${API_URL}/sales`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           userId: user.id,

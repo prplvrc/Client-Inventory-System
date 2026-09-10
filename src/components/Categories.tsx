@@ -48,7 +48,19 @@ function Categories() {
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      const response = await fetch(`${API_URL}/categories`);
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
+      const response = await fetch(`${API_URL}/categories`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch categories");
@@ -100,10 +112,20 @@ function Categories() {
         throw new Error("VITE_API_URL is not configured.");
       }
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
       const response = await fetch(
         `${API_URL}/categories/${id}`,
         {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 

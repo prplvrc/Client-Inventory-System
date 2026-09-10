@@ -89,9 +89,18 @@ function Products() {
 
       if (!API_URL) throw new Error("VITE_API_URL is not configured.");
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
       const response = await fetch(`${API_URL}/products?${params.toString()}`, {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
@@ -131,9 +140,18 @@ function Products() {
       setError("");
       if (!API_URL) throw new Error("VITE_API_URL is not configured.");
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
       const response = await fetch(`${API_URL}/products/${id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) throw new Error(`Failed to delete product: ${response.status}`);

@@ -6,6 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 
 interface LoginResponse {
   message: string;
+  token: string;
   user: {
     id: number;
     username: string;
@@ -14,12 +15,11 @@ interface LoginResponse {
     lastName: string;
     role: "ADMIN" | "STAFF";
     status: "ACTIVE" | "INACTIVE";
-
     branch: {
-    id: number;
-    code: "BRANCH_1" | "BRANCH_2";
-    name: string;
-  };
+      id: number;
+      code: "BRANCH_1" | "BRANCH_2";
+      name: string;
+    };
   };
 }
 
@@ -80,6 +80,8 @@ function Login() {
       if (!result.user || !result.user.id) {
         throw new Error("Invalid login response from server.");
       }
+
+      localStorage.setItem("token", result.token);
 
       login(result.user, rememberMe);
       navigate("/dashboard");

@@ -74,7 +74,19 @@ function InventoryForm({
         throw new Error("VITE_API_URL is not configured.");
       }
 
-      const response = await fetch(`${API_URL}/ingredients`);
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
+      const response = await fetch(`${API_URL}/ingredients`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch ingredients");
@@ -119,10 +131,17 @@ function InventoryForm({
         return;
       }
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
       const response = await fetch(`${API_URL}/ingredients`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: newIngredientName.trim(),
@@ -231,10 +250,17 @@ function InventoryForm({
         ? `${API_URL}/inventory/${inventory.id}`
         : `${API_URL}/inventory`;
 
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("You are not logged in.");
+      }
+
       const response = await fetch(url, {
         method: inventory ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(inventoryData),
       });

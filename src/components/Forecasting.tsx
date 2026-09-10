@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { SlidersHorizontal, Package } from "lucide-react";
 import { TableSkeleton } from "./LoadingSkeleton";
+import { FORECAST_API_URL } from "../services/api";
+
+import { useBranch } from "../hooks/useBranch";
 
 interface ForecastSummary {
   period: string;
@@ -28,6 +31,7 @@ interface ForecastResponse {
 }
 
 function Forecasting() {
+  const { selectedBranchId } = useBranch();
   const [dateTime, setDateTime] = useState(new Date());
 
   const [period, setPeriod] = useState("next-day");
@@ -49,19 +53,31 @@ function Forecasting() {
 
   // Fetch forecast data
   useEffect(() => {
+    // Do not fetch forecasting data when ALL branches are selected
+    if (selectedBranchId === "ALL") {
+      setData(null);
+      setError("");
+      setLoading(false);
+      return;
+    }
+
     const fetchForecast = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const API_URL = import.meta.env.VITE_API_URL;
-
-        if (!API_URL) {
-          throw new Error("VITE_API_URL is not configured.");
+        if (!FORECAST_API_URL) {
+          throw new Error("FORECAST_API_URL is not configured.");
         }
 
+        const params = new URLSearchParams();
+
+        params.append("period", period);
+        params.append("product", product);
+        params.append("branchId", String(selectedBranchId));
+
         const response = await fetch(
-          `${API_URL}/api/forecast?period=${period}&product=${product}`
+          `${FORECAST_API_URL}/forecast?${params.toString()}`
         );
 
         if (!response.ok) {
@@ -80,7 +96,7 @@ function Forecasting() {
     };
 
     fetchForecast();
-  }, [period, product]);
+  }, [period, product, selectedBranchId]);
 
   return (
     <div className="w-full p-4 sm:p-6">
@@ -157,6 +173,13 @@ function Forecasting() {
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
           {error}
+        </div>
+      )}
+
+      {/* BRANCH SELECTION MESSAGE */}
+      {selectedBranchId === "ALL" && (
+        <div className="mb-4 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-700">
+          Select Branch 1 or Branch 2 to view forecasting.
         </div>
       )}
 
