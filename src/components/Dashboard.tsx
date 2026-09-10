@@ -9,7 +9,7 @@ import {
   Calculator,
 } from "lucide-react";
 import { API_URL } from "../services/api";
-import { useAuth } from "../hooks/useAuth";
+import { useBranch } from "../hooks/useBranch";
 
 interface DashboardMetrics {
   todaySales: number;
@@ -50,6 +50,7 @@ interface DashboardResponse {
 }
 
 function Dashboard() {
+  const { selectedBranchId, selectedBranch } = useBranch();
   const [dateTime, setDateTime] = useState(new Date());
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +76,16 @@ function Dashboard() {
           throw new Error("VITE_API_URL is not configured.");
         }
 
-        const response = await fetch(`${API_URL}/dashboard`, {
+        const params = new URLSearchParams();
+
+        if (selectedBranchId !== "ALL" && selectedBranchId) {
+          params.append("branchId", String(selectedBranchId));
+        }
+
+        const queryString = params.toString();
+        const endpoint = `${API_URL}/dashboard${queryString ? `?${queryString}` : ""}`;
+
+        const response = await fetch(endpoint, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -97,7 +107,7 @@ function Dashboard() {
     };
 
     fetchDashboard();
-  }, []);
+  }, [selectedBranchId]);
 
   // Use empty metrics while loading.
   const metrics = dashboard?.metrics ?? {
@@ -113,7 +123,7 @@ function Dashboard() {
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="pl-12 lg:pl-0">
           <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
-            Dashboard
+            Dashboard {selectedBranch ? `- ${selectedBranch.name}` : ""}
           </h1>
           <p className="text-xs text-gray-500">
             Good Day, Admin! Here is today's overview.
@@ -461,40 +471,50 @@ function TopProductsChart({ data }: { data: TopSellingProduct[] }) {
   const center = 75;
   const radius = 60;
 
-  let currentAngle = 0;
+  // Pre-calculate slices with cumulative angles using reduce to satisfy React Strict Purity rules
+  const slices = data.slice(0, 5).reduce<
+    Array<TopSellingProduct & { path: string }>
+  >((acc, item) => {
+    const currentAngle = acc.reduce((sum, prev) => {
+      const percentage = prev.quantity / total;
+      return sum + percentage * 360;
+    }, 0);
+
+    const percentage = item.quantity / total;
+    const angle = percentage * 360;
+    const startAngle = currentAngle;
+    const endAngle = currentAngle + angle;
+
+    const path = createPieSlice(center, center, radius, startAngle, endAngle);
+
+    acc.push({
+      ...item,
+      path,
+    });
+
+    return acc;
+  }, []);
+
+  const pieClasses = [
+    "fill-gray-900",
+    "fill-gray-700",
+    "fill-gray-500",
+    "fill-gray-400",
+    "fill-gray-300",
+  ];
 
   return (
     <div className="flex h-45 items-center justify-center">
       <svg viewBox="0 0 150 150" className="h-37.5 w-37.5">
-        {data.slice(0, 5).map((item, index) => {
-          const percentage = item.quantity / total;
-          const angle = percentage * 360;
-
-          const startAngle = currentAngle;
-          const endAngle = currentAngle + angle;
-
-          currentAngle = endAngle;
-
-          const path = createPieSlice(center, center, radius, startAngle, endAngle);
-
-          const pieClasses = [
-            "fill-gray-900",
-            "fill-gray-700",
-            "fill-gray-500",
-            "fill-gray-400",
-            "fill-gray-300",
-          ];
-
-          return (
-            <path
-              key={item.product}
-              d={path}
-              className={pieClasses[index % pieClasses.length]}
-              stroke="white"
-              strokeWidth="1.5"
-            />
-          );
-        })}
+        {slices.map((slice, index) => (
+          <path
+            key={slice.product}
+            d={slice.path}
+            className={pieClasses[index % pieClasses.length]}
+            stroke="white"
+            strokeWidth="1.5"
+          />
+        ))}
       </svg>
     </div>
   );

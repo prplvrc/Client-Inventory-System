@@ -78,7 +78,9 @@ function Inventory() {
   const {
   selectedBranchId,
   selectedBranch,
-} = useBranch();
+  } = useBranch();
+
+  
 
   const limit = 10;
   // Real-time Clock
@@ -100,7 +102,7 @@ function Inventory() {
     return () => clearTimeout(timer);
   }, [search, unit, status]);
   // Fetch Inventory
-  const fetchInventory = async () => {
+  const fetchInventory = async (targetPage?: number) => {
     try {
       setLoading(true);
       setError("");
@@ -108,7 +110,7 @@ function Inventory() {
       if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
       }
-
+      const activePage = targetPage ?? page;
       const params = new URLSearchParams();
 
       if (debouncedSearch.trim()) {
@@ -128,7 +130,7 @@ function Inventory() {
         params.append("branchId", String(selectedBranchId));
       }
 
-      params.append("page", String(page));
+      params.append("page", String(activePage));
       params.append("limit", String(limit));
 
       const response = await fetch(
@@ -426,7 +428,7 @@ function Inventory() {
                   Ingredient
                 </th>
 
-                <th className="px-4 py-2.5 text-center">
+                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
                   Branch
                 </th>
 
@@ -461,7 +463,7 @@ function Inventory() {
             <tbody className="divide-y divide-gray-200">
 
               {loading ? (
-                <TableSkeleton columns={7} />
+                <TableSkeleton columns={8} />
               ) : inventory.length === 0 ? (
 
                 <tr>
@@ -498,7 +500,7 @@ function Inventory() {
                       </td>
 
                       {/* BRANCH */}
-                      <td className="px-4 py-2.5 text-center">
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
                         {item.branch.name}
                       </td>
 

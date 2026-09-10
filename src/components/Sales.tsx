@@ -92,7 +92,7 @@ function Sales() {
   }, [search, cashierFilter]);
 
   // Fetch Sales Data from API
-  const fetchSales = useCallback(async () => {
+  const fetchSales = useCallback(async (targetPage?: number) => {
     try {
       setLoading(true);
       setError("");
@@ -105,7 +105,8 @@ function Sales() {
       if (endDate) params.append("endDate", endDate);
       if (selectedBranchId !== "ALL") {params.append("branchId", String(selectedBranchId));}
 
-      params.append("page", String(page));
+      const activePage = targetPage ?? page;
+      params.append("page", String(activePage));
       params.append("limit", String(limit));
 
       if (!API_URL) throw new Error("VITE_API_URL is not configured.");
@@ -319,10 +320,10 @@ function Sales() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <TableSkeleton columns={7} />
+                <TableSkeleton columns={8} />
               ) : sales.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-500">
+                  <td colSpan={8} className="py-12 text-center text-gray-500">
                     No sales records found.
                   </td>
                 </tr>
