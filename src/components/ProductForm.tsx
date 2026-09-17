@@ -10,6 +10,7 @@ interface Product {
   categoryId?: number;
   price: number;
   status: string;
+  requiresPreparation: boolean;
   bom: string | null;
 }
 
@@ -38,6 +39,7 @@ interface ProductDetails {
   category: string;
   price: number;
   status: string;
+  requiresPreparation: boolean;
   bom: {
     id: number;
     items: {
@@ -75,6 +77,9 @@ function ProductForm({
   const [status, setStatus] = useState(
     product?.status ?? "ACTIVE"
   );
+
+  const [requiresPreparation, setRequiresPreparation] =
+  useState(product?.requiresPreparation ?? false);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -268,6 +273,11 @@ function ProductForm({
           result.categoryId.toString()
         );
 
+        // Load batch preparation setting
+        setRequiresPreparation(
+          result.requiresPreparation
+        );
+
         // Load recipe
         if (result.bom?.items) {
           setRecipe(
@@ -421,6 +431,7 @@ function ProductForm({
         categoryId: Number(categoryId),
         price: numericPrice,
         status,
+        requiresPreparation,
         recipe: recipe.map((item) => ({
           ingredientId: Number(
             item.ingredientId
@@ -594,8 +605,8 @@ function ProductForm({
 
           <p className="text-[11px] text-gray-600">
             {isEditing
-              ? "Update product details and recipe."
-              : "Fill out the product details and recipe."}
+              ? "Update product details and batch preparation settings."
+              : "Fill out the product details and batch preparation settings."}
           </p>
 
         </div>
@@ -750,9 +761,7 @@ function ProductForm({
                 type="number"
                 value={price}
                 onChange={(e) =>
-                  setPrice(
-                    e.target.value
-                  )
+                  setPrice(e.target.value)
                 }
                 placeholder="0.00"
                 required
@@ -761,6 +770,35 @@ function ProductForm({
                 disabled={loading}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none disabled:bg-gray-100"
               />
+            </div>
+
+            {/* BATCH PREPARATION */}
+            <div className="col-span-2">
+              <label className="flex cursor-pointer items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3">
+
+                <input
+                  type="checkbox"
+                  checked={requiresPreparation}
+                  onChange={(e) =>
+                    setRequiresPreparation(
+                      e.target.checked
+                    )
+                  }
+                  disabled={loading}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300"
+                />
+
+                <span>
+                  <span className="block text-xs font-semibold text-gray-800">
+                    Requires batch preparation
+                  </span>
+
+                  <span className="mt-0.5 block text-[10px] text-gray-500">
+                    Enable this for products that must be prepared as a cooking batch before they can be sold.
+                  </span>
+                </span>
+
+              </label>
             </div>
 
           </div>
@@ -775,11 +813,18 @@ function ProductForm({
 
               <div>
                 <p className="text-xs font-semibold text-gray-900">
-                  Recipe / Ingredients
+                  Standard Batch Recipe
                 </p>
 
                 <p className="text-[10px] text-gray-500">
-                  Define the ingredients needed to make one product.
+                  Ingredients required to prepare one cooking batch.
+                </p>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Enter the ingredient quantities required to prepare
+                  one standard cooking batch. These ingredients are
+                  deducted when staff prepares the batch, not when
+                  customers purchase individual orders.
                 </p>
               </div>
 
@@ -840,7 +885,7 @@ function ProductForm({
                         className="rounded-md border border-gray-200 bg-white p-2"
                       >
 
-                        <div className="grid grid-cols-[1fr_75px_30px] gap-2">
+                        <div className="grid grid-cols-[1fr_110px_30px] gap-2">
 
                           {/* INGREDIENT */}
                           <div>
@@ -894,7 +939,7 @@ function ProductForm({
                           {/* QUANTITY */}
                           <div>
                             <label className="mb-1 block text-[10px] font-medium text-gray-600">
-                              Quantity
+                              Quantity per standard batch
                             </label>
 
                             <input

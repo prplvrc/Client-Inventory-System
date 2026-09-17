@@ -46,10 +46,43 @@ interface Branch {
   name: string;
 }
 
+interface PreparedBatch {
+  id: number;
+  productId: number;
+  branchId: number;
+  preparedById: number;
+  status: "AVAILABLE" | "LOW" | "EMPTY";
+  note: string | null;
+  preparedAt: string;
+  emptiedAt: string | null;
 
+  product: {
+    id: number;
+    name: string;
+  };
+
+  branch: Branch;
+
+  preparedBy: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+}
 
 function Inventory() {
+  type InventoryTab = "RAW" | "PREPARED";
+
+  const [activeTab, setActiveTab] =
+    useState<InventoryTab>("RAW");
+
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+
+  const [preparedBatches, setPreparedBatches] =
+    useState<PreparedBatch[]>([]);
+
+  const [preparedBatchLoading, setPreparedBatchLoading] =
+    useState(false);
 
   // Filter states
   const [search, setSearch] = useState("");
@@ -191,6 +224,76 @@ function Inventory() {
     debouncedStatus,
     selectedBranchId,
   ]);
+
+  useEffect(() => {
+    if (activeTab === "PREPARED") {
+      fetchPreparedBatches();
+    }
+  }, [activeTab, selectedBranchId]);
+
+// Fetch Prepared Batches
+const fetchPreparedBatches = async () => {
+  try {
+    setPreparedBatchLoading(true);
+
+    if (!API_URL) {
+      throw new Error("VITE_API_URL is not configured.");
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error("You are not logged in.");
+    }
+
+    const params = new URLSearchParams();
+
+    if (selectedBranchId && selectedBranchId !== "ALL") {
+      params.append("branchId", String(selectedBranchId));
+    }
+
+    const response = await fetch(
+      `${API_URL}/prepared-batches?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      let message = `Failed to fetch prepared batches: ${response.status}`;
+
+      try {
+        const result = await response.json();
+        message = result.message || message;
+      } catch {
+        // Response was not JSON
+      }
+
+      throw new Error(message);
+    }
+
+    const result = await response.json();
+
+    setPreparedBatches(result.data ?? []);
+  } catch (err) {
+    console.error("Fetch prepared batches error:", err);
+
+    setPreparedBatches([]);
+
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Unable to load prepared batches."
+    );
+  } finally {
+    setPreparedBatchLoading(false);
+  }
+};
+
   // Add Inventory
   const handleAdd = () => {
     if (selectedBranchId === "ALL") {
@@ -334,8 +437,38 @@ function Inventory() {
         </div>
       </div>
 
+      {/* INVENTORY TABS */}
+      <div className="mb-4 flex">
+        <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("RAW")}
+            className={
+              activeTab === "RAW"
+                ? "rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+                : "rounded-md px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            }
+          >
+            Raw Ingredients
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("PREPARED")}
+            className={
+              activeTab === "PREPARED"
+                ? "rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+                : "rounded-md px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            }
+          >
+            Prepared Batches
+          </button>
+        </div>
+      </div>
+
       {/* ACTION BAR */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {activeTab === "RAW" && (
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
         {/* SEARCH */}
         <div className="flex flex-1 items-center gap-3">
@@ -380,9 +513,10 @@ function Inventory() {
           </button>
         </div>
       </div>
+      )}
 
       {/* FILTERS */}
-      {showFilters && (
+      {activeTab === "RAW" && showFilters && (
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
 
           <input
@@ -427,8 +561,9 @@ function Inventory() {
         </div>
       )}
 
-      {/* TABLE */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      {/* RAW INGREDIENTS TABLE */}
+      {activeTab === "RAW" && (
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
 
           <table className="w-full border-collapse text-left text-xs text-gray-700">
@@ -600,9 +735,138 @@ function Inventory() {
 
         </div>
       </div>
+      )}
 
-      {/* PAGINATION */}
-      <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
+      {/* PREPARED BATCHES TABLE */}
+      {activeTab === "PREPARED" && (
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-xs text-gray-700">
+              <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
+                <tr>
+                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                    Batch #
+                  </th>
+
+                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                    Product
+                  </th>
+
+                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                    Prepared At
+                  </th>
+
+                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                    Prepared By
+                  </th>
+
+                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                    Status
+                  </th>
+
+                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                    Branch
+                  </th>
+
+                  <th className="px-4 py-2.5 text-center">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-gray-200">
+                {preparedBatchLoading ? (
+                  <TableSkeleton columns={7} />
+                ) : preparedBatches.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="py-12 text-center text-gray-500"
+                    >
+                      No prepared batches found.
+                    </td>
+                  </tr>
+                ) : (
+                  preparedBatches.map((batch) => (
+                    <tr
+                      key={batch.id}
+                      className="transition hover:bg-gray-50/80"
+                    >
+                      {/* BATCH NUMBER */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center font-medium text-gray-500">
+                        #{batch.id}
+                      </td>
+
+                      {/* PRODUCT */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 font-semibold text-gray-900">
+                        {batch.product?.name ?? "—"}
+                      </td>
+
+                      {/* PREPARED AT */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
+                        {new Date(batch.preparedAt).toLocaleString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </td>
+
+                      {/* PREPARED BY */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
+                        {batch.preparedBy
+                          ? `${batch.preparedBy.firstName} ${batch.preparedBy.lastName}`
+                          : "—"}
+                      </td>
+
+                      {/* STATUS */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
+                        <span
+                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            batch.status === "AVAILABLE"
+                              ? "bg-green-100 text-green-800"
+                              : batch.status === "LOW"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {batch.status}
+                        </span>
+                      </td>
+
+                      {/* BRANCH */}
+                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
+                        {batch.branch?.name ?? "—"}
+                      </td>
+
+                      {/* ACTIONS */}
+                      <td className="px-4 py-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            disabled={batch.status === "EMPTY"}
+                            className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            Mark Empty
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* RAW INVENTORY PAGINATION */}
+      {activeTab === "RAW" && (
+        <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
 
         <span>
           Page <strong>{page}</strong> of{" "}
@@ -635,6 +899,7 @@ function Inventory() {
 
         </div>
       </div>
+      )}
 
       {/* FORM MODAL */}
 

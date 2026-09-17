@@ -21,14 +21,16 @@ interface Product {
   product: string;
   category: string;
   price: number;
-  status: string;
-  bom: string | null;
-  stockStatus:
+  status: "ACTIVE" | "INACTIVE";
+  requiresPreparation: boolean;
+
+  batchStatus:
     | "AVAILABLE"
-    | "LOW_STOCK"
-    | "OUT_OF_STOCK"
+    | "LOW"
+    | "EMPTY"
     | null;
-  maxQuantity: number | null;
+
+  sellable: boolean;
 }
 
 interface ProductResponse {
@@ -79,8 +81,7 @@ function POS() {
 
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>("CASH");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
 
   // Payment processing
   const [processingPayment, setProcessingPayment] =
@@ -91,6 +92,7 @@ function POS() {
 
   // Transaction error
   const [paymentError, setPaymentError] = useState("");
+  const [idempotencyKey, setIdempotencyKey] = useState("");
 
   // Created transaction ID
   const [completedTransactionId, setCompletedTransactionId] =
@@ -209,21 +211,6 @@ function POS() {
 
   // Add product to cart
   const addToCart = (product: Product) => {
-    const currentQuantity =
-      cart.find((item) => item.id === product.id)
-        ?.quantity ?? 0;
-
-    if (
-      product.maxQuantity !== null &&
-      currentQuantity >= product.maxQuantity
-    ) {
-      setError(
-        `Only ${product.maxQuantity} ${product.product} can currently be prepared at ${posBranchName}.`
-      );
-
-      return;
-    }
-
     setCart((currentCart) => {
       const existingItem = currentCart.find(
         (item) => item.id === product.id
@@ -258,17 +245,6 @@ function POS() {
     const item = cart.find((item) => item.id === id);
 
     if (!item) {
-      return;
-    }
-
-    if (
-      item.maxQuantity !== null &&
-      item.quantity >= item.maxQuantity
-    ) {
-      setError(
-        `Only ${item.maxQuantity} ${item.product} can currently be prepared at ${posBranchName}.`
-      );
-
       return;
     }
 
@@ -332,6 +308,7 @@ function POS() {
       return;
     }
 
+    setIdempotencyKey(crypto.randomUUID());
     setPaymentMethod("CASH");
     setPaymentError("");
     setSuccessMessage("");
@@ -347,12 +324,6 @@ function POS() {
 
       if (!API_URL) {
         throw new Error("VITE_API_URL is not configured.");
-      }
-
-      if (!user) {
-        throw new Error(
-          "Unable to identify the logged-in user. Please log in again."
-        );
       }
 
       // Prepare sale items
@@ -376,10 +347,10 @@ function POS() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId: user.id,
           branchId: posBranchId,
           paymentMethod,
           items,
+          idempotencyKey,
         }),
       });
 
@@ -591,12 +562,18 @@ function POS() {
                   <p className="mt-1 text-[10px] text-gray-400">
                     ID: #{product.id}
                   </p>
-
-                  {/* AVAILABLE QUANTITY */}
-                  {product.maxQuantity !== null && (
-                    <p className="mt-1 text-[10px] text-gray-500">
-                      Available: {product.maxQuantity}
-                    </p>
+                  {product.requiresPreparation && (
+                    <span
+                      className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${
+                        product.batchStatus === "AVAILABLE"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : product.batchStatus === "LOW"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-red-50 text-red-700"
+                      }`}
+                    >
+                      {product.batchStatus}
+                    </span>
                   )}
 
                   {/* PRICE + ADD */}
@@ -608,16 +585,13 @@ function POS() {
                     <button
                       type="button"
                       onClick={() => addToCart(product)}
-                      disabled={
-                        product.stockStatus === "OUT_OF_STOCK" ||
-                        product.maxQuantity === 0
-                      }
+                      disabled={!product.sellable}
                       className="flex items-center gap-1 rounded-md border border-[#d6d09b] bg-[#EFEABB] px-3 py-1.5 text-[11px] font-semibold text-gray-900 transition hover:bg-[#e3dc9e] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Plus size={12} />
 
-                      {product.stockStatus === "OUT_OF_STOCK"
-                        ? "Out of Stock"
+                      {!product.sellable
+                        ? "Unavailable"
                         : "Add"}
                     </button>
                   </div>
