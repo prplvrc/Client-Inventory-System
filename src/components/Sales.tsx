@@ -7,9 +7,11 @@ import {
   Download,
   RefreshCw,
 } from "lucide-react";
+
 import TransactionDetailsModal from "../components/TransactionDetailsModal";
 import { TableSkeleton } from "./LoadingSkeleton";
-import { API_URL } from "../services/api";
+import PageHeader from "./ui/PageHeader";
+import { apiRequest } from "../services/api";
 import { useBranch } from "../hooks/useBranch";
 
 interface SaleRecord {
@@ -18,6 +20,9 @@ interface SaleRecord {
   time: string;
   itemQuantity: number;
   total: number;
+  paymentMethod: string;
+  status: string;
+  voidReason?: string | null;
   cashier: string;
 
   branch: {
@@ -46,19 +51,20 @@ function Sales() {
   const { selectedBranchId } = useBranch();
 
   const [sales, setSales] = useState<SaleRecord[]>([]);
+
   const [metrics, setMetrics] = useState<SalesMetrics>({
     totalSales: 0,
     totalTransactions: 0,
     averageSaleValue: 0,
   });
 
-  // Raw Filter States
+  // Raw filter states
   const [search, setSearch] = useState("");
   const [cashierFilter, setCashierFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Debounced Filter States
+  // Debounced filter states
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [debouncedCashier, setDebouncedCashier] = useState("");
 
@@ -69,19 +75,13 @@ function Sales() {
   const [error, setError] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Selected Transaction for Modal
-  const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null);
+  // Selected transaction for modal
+  const [selectedTransactionId, setSelectedTransactionId] =
+    useState<number | null>(null);
 
-  const [dateTime, setDateTime] = useState(new Date());
   const limit = 10;
 
-  // Real-time clock
-  useEffect(() => {
-    const timer = setInterval(() => setDateTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Debounce search and filter inputs
+  // Debounce search and cashier filter
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -91,64 +91,93 @@ function Sales() {
     return () => clearTimeout(timer);
   }, [search, cashierFilter]);
 
-  // Fetch Sales Data from API
-  const fetchSales = useCallback(async (targetPage?: number) => {
-    try {
-      setLoading(true);
-      setError("");
+  // Fetch sales data
+  const fetchSales = useCallback(
+    async (targetPage?: number) => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const params = new URLSearchParams();
+        const params = new URLSearchParams();
 
-      if (debouncedSearch.trim()) params.append("search", debouncedSearch.trim());
-      if (debouncedCashier.trim()) params.append("cashier", debouncedCashier.trim());
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-      if (selectedBranchId !== "ALL") {params.append("branchId", String(selectedBranchId));}
+        if (debouncedSearch.trim()) {
+          params.append("search", debouncedSearch.trim());
+        }
 
-      const activePage = targetPage ?? page;
-      params.append("page", String(activePage));
-      params.append("limit", String(limit));
+        if (debouncedCashier.trim()) {
+          params.append("cashier", debouncedCashier.trim());
+        }
 
-      if (!API_URL) throw new Error("VITE_API_URL is not configured.");
+        if (startDate) {
+          params.append("startDate", startDate);
+        }
 
-      const response = await fetch(`${API_URL}/sales?${params.toString()}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+        if (endDate) {
+          params.append("endDate", endDate);
+        }
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch sales: ${response.status}`);
-      }
+        // ALL means no branch restriction
+        if (selectedBranchId !== "ALL") {
+          params.append("branchId", String(selectedBranchId));
+        }
 
-      const result: SalesResponse = await response.json();
-      setSales(result.data ?? []);
-      setMetrics(
-        result.metrics ?? {
+        const activePage = targetPage ?? page;
+
+        params.append("page", String(activePage));
+        params.append("limit", String(limit));
+
+        const result = await apiRequest<SalesResponse>(
+          `/sales?${params.toString()}`
+        );
+
+        setSales(result.data ?? []);
+
+        setMetrics(
+          result.metrics ?? {
+            totalSales: 0,
+            totalTransactions: 0,
+            averageSaleValue: 0,
+          }
+        );
+
+        setTotalPages(result.totalPages ?? 1);
+      } catch (err) {
+        console.error("Fetch sales error:", err);
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load sales records. Please try again."
+        );
+
+        setSales([]);
+
+        setMetrics({
           totalSales: 0,
           totalTransactions: 0,
           averageSaleValue: 0,
-        }
-      );
-      setTotalPages(result.totalPages ?? 1);
-    } catch (err) {
-      console.error("Fetch sales error:", err);
-      setError("Unable to load sales records. Please try again.");
-      setSales([]);
-      setMetrics({
-        totalSales: 0,
-        totalTransactions: 0,
-        averageSaleValue: 0,
-      });
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  }, [debouncedSearch, debouncedCashier, startDate, endDate, page, selectedBranchId]);
+        });
+
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      debouncedSearch,
+      debouncedCashier,
+      startDate,
+      endDate,
+      page,
+      selectedBranchId,
+    ]
+  );
 
   useEffect(() => {
     fetchSales();
   }, [fetchSales]);
 
+  // Reset all filters
   const handleReset = () => {
     setSearch("");
     setCashierFilter("");
@@ -159,230 +188,390 @@ function Sales() {
 
   return (
     <div className="w-full p-4 sm:p-6">
-      {/* HEADER */}
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="pl-12 lg:pl-0">
-          <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
-            Sales
-          </h1>
-          <p className="text-xs text-gray-500">
-            View sales history and individual transaction details.
+
+      {/* PAGE HEADER */}
+      <PageHeader
+        title="Sales"
+        description="View sales history and individual transaction details."
+        actions={
+          <button
+            type="button"
+            onClick={() => fetchSales(1)}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RefreshCw
+              size={14}
+              className={loading ? "animate-spin" : ""}
+            />
+            Refresh
+          </button>
+        }
+      />
+
+      {/* SALES METRICS */}
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+        {/* TOTAL SALES */}
+        <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+            Total Sales
           </p>
-        </div>
 
-        <div className="flex items-center gap-4 text-xs font-medium text-gray-600">
-          <span>
-            DATE:{" "}
-            {dateTime.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>
-          <span>
-            TIME: {dateTime.toLocaleTimeString("en-US", { hour12: false })}
-          </span>
-        </div>
-      </div>
-
-      {/* SALES METRICS DASHBOARD */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500">Total Sales</h2>
-          <p className="mt-2 text-xl font-bold text-gray-900">
+          <p className="mt-2 text-xl font-semibold tracking-tight text-[#1F2937]">
             ₱{Number(metrics.totalSales || 0).toFixed(2)}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500">Total Transactions</h2>
-          <p className="mt-2 text-xl font-bold text-gray-900">
+
+        {/* TOTAL TRANSACTIONS */}
+        <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+            Total Transactions
+          </p>
+
+          <p className="mt-2 text-xl font-semibold tracking-tight text-[#1F2937]">
             {metrics.totalTransactions || 0}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <h2 className="text-xs font-medium uppercase tracking-wider text-gray-500">Average Sale Value</h2>
-          <p className="mt-2 text-xl font-bold text-gray-900">
+
+        {/* AVERAGE SALE */}
+        <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+            Average Sale Value
+          </p>
+
+          <p className="mt-2 text-xl font-semibold tracking-tight text-[#1F2937]">
             ₱{Number(metrics.averageSaleValue || 0).toFixed(2)}
           </p>
         </div>
+
       </div>
 
       {/* ACTION BAR */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 items-center gap-3">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search sales records..."
-              className="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
-            />
-          </div>
+
+        {/* SEARCH */}
+        <div className="relative w-full max-w-sm">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]"
+            aria-hidden="true"
+          />
+
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search sales records..."
+            className="w-full rounded-lg border border-[#E5E7EB] bg-white py-2 pl-9 pr-3 text-sm text-[#1F2937] placeholder:text-[#94A3B8] outline-none transition focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
+          />
         </div>
 
+        {/* ACTIONS */}
         <div className="flex items-center gap-2">
-          {/* FILTER TOGGLE */}
+
+          {/* FILTERS */}
           <button
             type="button"
             onClick={() => setShowFilters((prev) => !prev)}
-            className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+            className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+              showFilters
+                ? "border-[#292A24] bg-[#F8F7F2] text-[#292A24]"
+                : "border-[#E5E7EB] bg-white text-[#1F2937] hover:bg-gray-50"
+            }`}
           >
             <SlidersHorizontal size={14} />
             Filters
           </button>
 
-          {/* EXPORT DATA BUTTON */}
+          {/* EXPORT */}
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-md border border-[#d6d09b] bg-[#EFEABB] px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-sm transition hover:bg-[#e3dc9e]"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#292A24] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90"
           >
             <Download size={14} />
             Export Data
           </button>
+
         </div>
       </div>
 
       {/* EXPANDABLE FILTERS */}
       {showFilters && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-          <div className="flex items-center gap-1.5">
-            <Calendar size={13} className="text-gray-400" />
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value);
-                setPage(1);
-              }}
-              className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
-            />
-            <span className="text-xs text-gray-400">to</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => {
-                setEndDate(e.target.value);
-                setPage(1);
-              }}
-              className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
-            />
+        <div className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
+
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+
+            {/* DATE RANGE */}
+            <div className="flex-1">
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+                Date Range
+              </label>
+
+              <div className="flex items-center gap-2">
+
+                <div className="relative flex-1">
+                  <Calendar
+                    size={14}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#64748B]"
+                    aria-hidden="true"
+                  />
+
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-2 pl-8 text-xs text-[#1F2937] outline-none focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
+                  />
+                </div>
+
+                <span className="text-xs text-[#64748B]">
+                  to
+                </span>
+
+                <div className="relative flex-1">
+                  <Calendar
+                    size={14}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#64748B]"
+                    aria-hidden="true"
+                  />
+
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setPage(1);
+                    }}
+                    className="w-full rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-2 pl-8 text-xs text-[#1F2937] outline-none focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
+                  />
+                </div>
+
+              </div>
+            </div>
+
+            {/* CASHIER */}
+            <div className="w-full lg:w-52">
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+                Cashier
+              </label>
+
+              <input
+                type="text"
+                value={cashierFilter}
+                onChange={(e) => {
+                  setCashierFilter(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Filter by cashier"
+                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#1F2937] placeholder:text-[#94A3B8] outline-none focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
+              />
+            </div>
+
+            {/* RESET */}
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#1F2937] transition hover:bg-gray-50"
+            >
+              <RefreshCw size={13} />
+              Reset
+            </button>
+
           </div>
-
-          <input
-            type="text"
-            value={cashierFilter}
-            onChange={(e) => {
-              setCashierFilter(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Filter by Cashier"
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
-          />
-
-          <button
-            type="button"
-            onClick={handleReset}
-            className="flex items-center gap-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100"
-          >
-            <RefreshCw size={12} />
-            Reset
-          </button>
         </div>
       )}
 
-      {/* ERROR MSG */}
+      {/* ERROR */}
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
           {error}
         </div>
       )}
 
-      {/* DATA TABLE */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      {/* SALES TABLE */}
+      <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-xs text-gray-700">
-            <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
+
+          <table className="w-full border-collapse text-left text-xs text-[#1F2937]">
+
+            <thead className="border-b border-[#E5E7EB] bg-[#F8F7F2] text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+
               <tr>
-                <th className="w-16 border-r border-gray-200 px-4 py-2.5 text-center">ID</th>
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">Branch</th>
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">Date</th>
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">Time</th>
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">Item Quantity</th>
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">Total</th>
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">Cashier</th>
-                <th className="px-4 py-2.5 text-center">Actions</th>
+
+                <th className="w-16 border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  ID
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Branch
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Date
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Time
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Item Quantity
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Total
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Cashier
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Status
+                </th>
+
+                <th className="w-28 px-4 py-3 text-center">
+                  Actions
+                </th>
+
               </tr>
+
             </thead>
-            <tbody className="divide-y divide-gray-200">
+
+            <tbody className="divide-y divide-[#E5E7EB]">
+
+              {/* LOADING */}
               {loading ? (
-                <TableSkeleton columns={8} />
+                <TableSkeleton columns={9} />
+
               ) : sales.length === 0 ? (
+
+                /* EMPTY */
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-gray-500">
+                  <td
+                    colSpan={9}
+                    className="px-4 py-12 text-center text-sm text-[#64748B]"
+                  >
                     No sales records found.
                   </td>
                 </tr>
+
               ) : (
+
+                /* DATA */
                 sales.map((item) => (
-                  <tr key={item.id} className="transition hover:bg-gray-50/80">
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center font-medium text-gray-500">
+                  <tr
+                    key={item.id}
+                    className="transition hover:bg-[#F8F7F2]/70"
+                  >
+
+                    {/* ID */}
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center font-medium text-[#64748B]">
                       #{item.id}
                     </td>
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center">
+
+                    {/* BRANCH */}
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center font-medium text-[#1F2937]">
                       {item.branch.name}
                     </td>
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
+
+                    {/* DATE */}
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center text-[#64748B]">
                       {item.date}
                     </td>
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
+
+                    {/* TIME */}
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center text-[#64748B]">
                       {item.time}
                     </td>
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
+
+                    {/* ITEM QUANTITY */}
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center text-[#64748B]">
                       {item.itemQuantity}
                     </td>
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-right font-semibold text-gray-900">
+
+                    {/* TOTAL */}
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-right font-semibold text-[#1F2937]">
                       ₱{Number(item.total).toFixed(2)}
                     </td>
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
+
+                    {/* CASHIER */}
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center text-[#64748B]">
                       {item.cashier}
                     </td>
-                    <td className="px-4 py-2.5 text-center">
+
+                    {/* STATUS */}
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                      {item.status === "VOIDED" ? (
+                        <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-red-600">
+                          VOIDED
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-green-600">
+                          COMPLETED
+                        </span>
+                      )}
+                    </td>
+
+                    {/* ACTIONS */}
+                    <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center">
+
                         <button
                           type="button"
-                          onClick={() => setSelectedTransactionId(item.id)}
-                          className="flex items-center gap-1 rounded border border-blue-300 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 transition hover:bg-blue-100"
+                          onClick={() =>
+                            setSelectedTransactionId(item.id)
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[#1F2937] transition hover:bg-gray-50"
                         >
                           <Eye size={12} />
                           View
                         </button>
+
                       </div>
                     </td>
+
                   </tr>
                 ))
               )}
+
             </tbody>
           </table>
+
         </div>
       </div>
 
       {/* PAGINATION */}
-      <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
-        <span>
-          Page <strong>{page}</strong> of <strong>{totalPages}</strong>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+        <span className="text-xs text-[#64748B]">
+          Page{" "}
+          <strong className="text-[#1F2937]">
+            {page}
+          </strong>{" "}
+          of{" "}
+          <strong className="text-[#1F2937]">
+            {totalPages}
+          </strong>
         </span>
 
         <div className="flex items-center gap-2">
+
           <button
             type="button"
             disabled={page <= 1}
-            onClick={() => setPage((curr) => curr - 1)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={() =>
+              setPage((curr) => curr - 1)
+            }
+            className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Previous
           </button>
@@ -390,19 +579,25 @@ function Sales() {
           <button
             type="button"
             disabled={page >= totalPages}
-            onClick={() => setPage((curr) => curr + 1)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={() =>
+              setPage((curr) => curr + 1)
+            }
+            className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
           </button>
+
         </div>
       </div>
 
       {/* TRANSACTION DETAILS MODAL */}
       <TransactionDetailsModal
         transactionId={selectedTransactionId}
-        onClose={() => setSelectedTransactionId(null)}
+        onClose={() =>
+          setSelectedTransactionId(null)
+        }
       />
+
     </div>
   );
 }

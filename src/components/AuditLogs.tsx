@@ -4,8 +4,10 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react";
+
 import { TableSkeleton } from "./LoadingSkeleton";
-import { API_URL } from "../services/api";
+import PageHeader from "./ui/PageHeader";
+import { apiRequest } from "../services/api";
 
 interface AuditLogItem {
   id: number;
@@ -26,12 +28,12 @@ interface AuditLogResponse {
 function AuditLog() {
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
 
-  // Raw Filter States
+  // Filter states
   const [search, setSearch] = useState("");
   const [action, setAction] = useState("");
   const [user, setUser] = useState("");
 
-  // Debounced Filter States
+  // Debounced filter states
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [debouncedAction, setDebouncedAction] = useState("");
   const [debouncedUser, setDebouncedUser] = useState("");
@@ -44,18 +46,7 @@ function AuditLog() {
 
   const [showFilters, setShowFilters] = useState(false);
 
-  const [dateTime, setDateTime] = useState(new Date());
-
   const limit = 10;
-
-  // Real-time clock
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setDateTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   // Debounce search and filter inputs
   useEffect(() => {
@@ -74,10 +65,6 @@ function AuditLog() {
       setLoading(true);
       setError("");
 
-      if (!API_URL) {
-        throw new Error("VITE_API_URL is not configured.");
-      }
-
       const params = new URLSearchParams();
 
       if (debouncedSearch.trim()) {
@@ -95,30 +82,23 @@ function AuditLog() {
       params.append("page", String(page));
       params.append("limit", String(limit));
 
-      const response = await fetch(
-        `${API_URL}/audit-logs?${params.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+      const queryString = params.toString();
+
+      const result = await apiRequest<AuditLogResponse>(
+        `/audit-logs?${queryString}`
       );
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch audit logs: ${response.status}`
-        );
-      }
-
-      const result: AuditLogResponse = await response.json();
 
       setAuditLogs(result.data ?? []);
       setTotalPages(result.totalPages ?? 1);
     } catch (err) {
       console.error("Fetch audit logs error:", err);
+
       setAuditLogs([]);
-      setError("Unable to load audit logs. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load audit logs. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -127,7 +107,10 @@ function AuditLog() {
   useEffect(() => {
     fetchAuditLogs();
   }, [
-    page, debouncedSearch, debouncedAction, debouncedUser,
+    page,
+    debouncedSearch,
+    debouncedAction,
+    debouncedUser,
   ]);
 
   // Reset Filters
@@ -158,178 +141,212 @@ function AuditLog() {
 
   return (
     <div className="w-full p-4 sm:p-6">
-      {/* HEADER */}
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="pl-12 lg:pl-0">
-          <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
-            Audit Logs
-          </h1>
-
-          <p className="text-xs text-gray-500">
-            Review system activities and track changes made by users
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4 text-xs font-medium text-gray-600">
-          <span>
-            DATE:{" "}
-            {dateTime.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>
-
-          <span>
-            TIME:{" "}
-            {dateTime.toLocaleTimeString("en-US", {
-              hour12: false,
-            })}
-          </span>
-        </div>
-      </div>
+      <PageHeader
+        title="Audit Logs"
+        description="Review system activities and track changes made by users"
+        actions={
+          <button
+            type="button"
+            onClick={fetchAuditLogs}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RefreshCw
+              size={14}
+              className={loading ? "animate-spin" : ""}
+            />
+            Refresh
+          </button>
+        }
+      />
 
       {/* ACTION BAR */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 items-center gap-3">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+        <div className="relative w-full max-w-sm">
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]"
+            aria-hidden="true"
+          />
 
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search audit logs..."
-              className="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
-            />
-          </div>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search audit logs..."
+            className="w-full rounded-lg border border-[#E5E7EB] bg-white py-2 pl-9 pr-3 text-sm text-[#1F2937] outline-none transition placeholder:text-[#94A3B8] focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
+          />
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* FILTER TOGGLE */}
-          <button
-            type="button"
-            onClick={() => setShowFilters((prev) => !prev)}
-            className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
-          >
-            <SlidersHorizontal size={14} />
-            Filters
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowFilters((prev) => !prev)}
+          className={`inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+            showFilters
+              ? "border-[#292A24] bg-[#292A24] text-white"
+              : "border-[#E5E7EB] bg-white text-[#1F2937] hover:bg-gray-50"
+          }`}
+        >
+          <SlidersHorizontal size={14} />
+          Filters
+        </button>
       </div>
 
-      {/* EXPANDABLE FILTERS */}
+      {/* FILTERS */}
       {showFilters && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-          <input
-            type="text"
-            value={user}
-            onChange={(e) => {
-              setUser(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Filter by User"
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
-          />
+        <div className="mb-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-[#1F2937]">
+                Filter Audit Logs
+              </h2>
 
-          <input
-            type="text"
-            value={action}
-            onChange={(e) => {
-              setAction(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Filter by Action"
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
-          />
+              <p className="mt-0.5 text-[11px] text-[#64748B]">
+                Narrow the activity records by user or action.
+              </p>
+            </div>
 
-          <button
-            type="button"
-            onClick={handleReset}
-            className="flex items-center gap-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100"
-          >
-            <RefreshCw size={12} />
-            Reset
-          </button>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-1.5 text-xs font-medium text-[#1F2937] transition hover:bg-gray-50"
+            >
+              <RefreshCw size={12} />
+              Reset
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="audit-user-filter"
+                className="mb-1.5 block text-xs font-medium text-[#1F2937]"
+              >
+                User
+              </label>
+
+              <input
+                id="audit-user-filter"
+                type="text"
+                value={user}
+                onChange={(e) => {
+                  setUser(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Filter by user"
+                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#1F2937] outline-none transition placeholder:text-[#94A3B8] focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="audit-action-filter"
+                className="mb-1.5 block text-xs font-medium text-[#1F2937]"
+              >
+                Action
+              </label>
+
+              <input
+                id="audit-action-filter"
+                type="text"
+                value={action}
+                onChange={(e) => {
+                  setAction(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Filter by action"
+                className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#1F2937] outline-none transition placeholder:text-[#94A3B8] focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
+              />
+            </div>
+          </div>
         </div>
       )}
 
       {/* ERROR MESSAGE */}
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700"
+        >
           {error}
         </div>
       )}
 
       {/* DATA TABLE */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-xs text-gray-700">
-            <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
+          <table className="w-full border-collapse text-left text-xs text-[#1F2937]">
+            <thead className="border-b border-[#E5E7EB] bg-[#F8F7F2] text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
               <tr>
-                <th className="w-16 border-r border-gray-200 px-4 py-2.5 text-center">
+                <th className="w-16 border-r border-[#E5E7EB] px-4 py-3 text-center">
                   ID
                 </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                <th className="min-w-44 border-r border-[#E5E7EB] px-4 py-3 text-center">
                   Timestamp
                 </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                <th className="min-w-32 border-r border-[#E5E7EB] px-4 py-3 text-center">
                   User
                 </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                <th className="min-w-32 border-r border-[#E5E7EB] px-4 py-3 text-center">
                   Action
                 </th>
 
-                <th className="px-4 py-2.5 text-center">
+                <th className="min-w-64 px-4 py-3 text-left">
                   Details
                 </th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-[#E5E7EB]">
               {loading ? (
                 <TableSkeleton columns={5} />
               ) : auditLogs.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
-                    className="py-12 text-center text-gray-500"
+                    className="px-4 py-12 text-center text-sm text-[#64748B]"
                   >
-                    No audit logs found.
+                    {debouncedSearch ||
+                    debouncedAction ||
+                    debouncedUser
+                      ? "No audit logs match your filters."
+                      : "No audit logs found."}
                   </td>
                 </tr>
               ) : (
                 auditLogs.map((log) => (
                   <tr
                     key={log.id}
-                    className="transition hover:bg-gray-50/80"
+                    className="transition hover:bg-[#F8F7F2]/70"
                   >
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center font-medium text-gray-500">
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center font-medium text-[#64748B]">
                       #{log.id}
                     </td>
 
-                    <td className="border-r border-gray-200 px-4 py-2.5 whitespace-nowrap text-center text-gray-600">
+                    <td className="whitespace-nowrap border-r border-[#E5E7EB] px-4 py-3 text-center text-[#64748B]">
                       {formatTimestamp(log.timestamp)}
                     </td>
 
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center font-semibold text-gray-900">
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center font-semibold text-[#1F2937]">
                       {log.user}
                     </td>
 
-                    <td className="border-r border-gray-200 px-4 py-2.5 text-center">
-                      <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-800">
+                    <td className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                      <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">
                         {log.action}
                       </span>
                     </td>
 
-                    <td className="px-4 py-2.5 text-gray-600">
-                      {log.details}
+                    <td className="px-4 py-3 text-[#64748B]">
+                      <span className="block min-w-64 whitespace-normal break-words">
+                        {log.details}
+                      </span>
                     </td>
                   </tr>
                 ))
@@ -340,10 +357,16 @@ function AuditLog() {
       </div>
 
       {/* PAGINATION */}
-      <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
-        <span>
-          Page <strong>{page}</strong> of{" "}
-          <strong>{totalPages}</strong>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <span className="text-xs text-[#64748B]">
+          Page{" "}
+          <strong className="font-semibold text-[#1F2937]">
+            {page}
+          </strong>{" "}
+          of{" "}
+          <strong className="font-semibold text-[#1F2937]">
+            {totalPages}
+          </strong>
         </span>
 
         <div className="flex items-center gap-2">
@@ -351,7 +374,7 @@ function AuditLog() {
             type="button"
             disabled={page <= 1}
             onClick={() => setPage((curr) => curr - 1)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Previous
           </button>
@@ -360,7 +383,7 @@ function AuditLog() {
             type="button"
             disabled={page >= totalPages}
             onClick={() => setPage((curr) => curr + 1)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
           </button>

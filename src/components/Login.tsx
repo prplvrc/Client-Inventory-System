@@ -81,9 +81,11 @@ function Login() {
         throw new Error("Invalid login response from server.");
       }
 
-      localStorage.setItem("token", result.token);
-
-      login(result.user, rememberMe);
+      login(
+        result.user,
+        result.token,
+        rememberMe
+      );
       navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err);

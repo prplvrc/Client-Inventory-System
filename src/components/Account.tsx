@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { User, Lock, Save, RefreshCw } from "lucide-react";
+
 import { Skeleton } from "./LoadingSkeleton";
-import { API_URL, getAuthHeaders } from "../services/api";
+import PageHeader from "./ui/PageHeader";
+import StatusBadge from "./ui/StatusBadge";
+import { apiRequest } from "../services/api";
 
 interface AccountData {
   id: number;
@@ -28,27 +31,14 @@ function Account() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Fetch Account
+  // Fetch account information
   const fetchAccount = async () => {
     try {
       setLoading(true);
       setError("");
       setSuccess("");
 
-      if (!API_URL) {
-        throw new Error("VITE_API_URL is not configured.");
-      }
-
-      const response = await fetch(`${API_URL}/account`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch account: ${response.status}`);
-      }
-
-      const result: AccountData = await response.json();
+      const result = await apiRequest<AccountData>("/account");
 
       setAccount(result);
       setName(result.name ?? "");
@@ -56,7 +46,11 @@ function Account() {
       setUsername(result.username ?? "");
     } catch (err) {
       console.error("Fetch account error:", err);
-      setError("Unable to load account information. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load account information. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -66,32 +60,21 @@ function Account() {
     fetchAccount();
   }, []);
 
-  // Save Profile
+  // Save profile information
   const handleSaveProfile = async () => {
     try {
       setSaving(true);
       setError("");
       setSuccess("");
 
-      if (!API_URL) {
-        throw new Error("VITE_API_URL is not configured.");
-      }
-
-      const response = await fetch(`${API_URL}/account`, {
+      const result = await apiRequest<AccountData>("/account", {
         method: "PUT",
-        headers: getAuthHeaders(),
         body: JSON.stringify({
           name,
           email,
           username,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update account: ${response.status}`);
-      }
-
-      const result: AccountData = await response.json();
 
       setAccount(result);
       setName(result.name ?? "");
@@ -101,13 +84,17 @@ function Account() {
       setSuccess("Account information updated successfully.");
     } catch (err) {
       console.error("Update account error:", err);
-      setError("Unable to update account information.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to update account information."
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  // Change Password
+  // Change password
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       setError("Please complete all password fields.");
@@ -132,22 +119,13 @@ function Account() {
       setError("");
       setSuccess("");
 
-      if (!API_URL) {
-        throw new Error("VITE_API_URL is not configured.");
-      }
-
-      const response = await fetch(`${API_URL}/account/password`, {
+      await apiRequest("/account/password", {
         method: "PUT",
-        headers: getAuthHeaders(),
         body: JSON.stringify({
           currentPassword,
           newPassword,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to change password: ${response.status}`);
-      }
 
       setCurrentPassword("");
       setNewPassword("");
@@ -156,13 +134,17 @@ function Account() {
       setSuccess("Password changed successfully.");
     } catch (err) {
       console.error("Change password error:", err);
-      setError("Unable to change password. Please check your current password.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to change password. Please check your current password."
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  // Reset
+  // Reset editable fields
   const handleReset = () => {
     if (!account) return;
 
@@ -180,27 +162,26 @@ function Account() {
 
   return (
     <div className="w-full p-4 sm:p-6">
-      {/* HEADER */}
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="pl-12 lg:pl-0">
-          <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
-            Account
-          </h1>
-          <p className="text-xs text-gray-500">
-            Manage your account information and security settings
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Account"
+        description="Manage your account information and security settings"
+      />
 
-      {/* ALERTS */}
+      {/* Alerts */}
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50/60 p-3 text-xs text-red-800">
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700"
+        >
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-800">
+        <div
+          role="status"
+          className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700"
+        >
           {success}
         </div>
       )}
@@ -212,95 +193,114 @@ function Account() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* PROFILE INFORMATION */}
-          <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
-              <User size={15} className="text-gray-500" />
-              <span>Profile Information</span>
+          {/* Profile Information */}
+          <section className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+            <div className="flex items-center gap-2 border-b border-[#E5E7EB] bg-[#F8F7F2] px-4 py-3">
+              <User
+                size={15}
+                className="text-[#64748B]"
+                aria-hidden="true"
+              />
+
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-[#1F2937]">
+                Profile Information
+              </h2>
             </div>
 
             <div className="space-y-4 p-4">
               {/* Name */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
+                <label
+                  htmlFor="account-name"
+                  className="mb-1.5 block text-xs font-medium text-[#1F2937]"
+                >
                   Name
                 </label>
+
                 <input
+                  id="account-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your name"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+                  className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#1F2937] outline-none transition placeholder:text-[#94A3B8] focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
                 />
               </div>
 
               {/* Username */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
+                <label
+                  htmlFor="account-username"
+                  className="mb-1.5 block text-xs font-medium text-[#1F2937]"
+                >
                   Username
                 </label>
+
                 <input
+                  id="account-username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter username"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+                  className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#1F2937] outline-none transition placeholder:text-[#94A3B8] focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
                 />
               </div>
 
               {/* Email */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
+                <label
+                  htmlFor="account-email"
+                  className="mb-1.5 block text-xs font-medium text-[#1F2937]"
+                >
                   Email
                 </label>
+
                 <input
+                  id="account-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+                  className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#1F2937] outline-none transition placeholder:text-[#94A3B8] focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
                 />
               </div>
 
               {/* Role */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
+                <label
+                  htmlFor="account-role"
+                  className="mb-1.5 block text-xs font-medium text-[#1F2937]"
+                >
                   Role
                 </label>
+
                 <input
+                  id="account-role"
                   type="text"
                   value={account?.role ?? ""}
                   disabled
-                  className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-100 px-3 py-1.5 text-xs text-gray-500"
+                  className="w-full cursor-not-allowed rounded-lg border border-[#E5E7EB] bg-slate-50 px-3 py-2 text-sm text-[#64748B]"
                 />
               </div>
 
               {/* Status */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
+                <span className="mb-1.5 block text-xs font-medium text-[#1F2937]">
                   Account Status
-                </label>
-                <div>
-                  <span
-                    className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                      account?.status?.toLowerCase() === "active"
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {account?.status ?? "Unknown"}
-                  </span>
-                </div>
+                </span>
+
+                <StatusBadge status={account?.status ?? "UNKNOWN"} />
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+              <div className="flex items-center justify-end gap-2 border-t border-[#E5E7EB] pt-4">
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <RefreshCw size={13} />
+                  <RefreshCw size={14} />
                   Reset
                 </button>
 
@@ -308,80 +308,105 @@ function Account() {
                   type="button"
                   onClick={handleSaveProfile}
                   disabled={saving}
-                  className="flex items-center gap-1.5 rounded-md border border-amber-200/60 bg-[#EFEABB] px-3.5 py-1.5 text-xs font-semibold text-gray-900 shadow-sm transition hover:bg-[#e3dc9e] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#292A24] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Save size={13} />
+                  <Save size={14} />
+
                   {saving ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </div>
           </section>
 
-          {/* CHANGE PASSWORD */}
-          <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
-              <Lock size={15} className="text-gray-500" />
-              <span>Change Password</span>
+          {/* Change Password */}
+          <section className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+            <div className="flex items-center gap-2 border-b border-[#E5E7EB] bg-[#F8F7F2] px-4 py-3">
+              <Lock
+                size={15}
+                className="text-[#64748B]"
+                aria-hidden="true"
+              />
+
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-[#1F2937]">
+                Change Password
+              </h2>
             </div>
 
             <div className="space-y-4 p-4">
               {/* Current Password */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
+                <label
+                  htmlFor="current-password"
+                  className="mb-1.5 block text-xs font-medium text-[#1F2937]"
+                >
                   Current Password
                 </label>
+
                 <input
+                  id="current-password"
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Enter current password"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+                  className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#1F2937] outline-none transition placeholder:text-[#94A3B8] focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
                 />
               </div>
 
               {/* New Password */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
+                <label
+                  htmlFor="new-password"
+                  className="mb-1.5 block text-xs font-medium text-[#1F2937]"
+                >
                   New Password
                 </label>
+
                 <input
+                  id="new-password"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+                  className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#1F2937] outline-none transition placeholder:text-[#94A3B8] focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
                 />
               </div>
 
               {/* Confirm Password */}
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">
+                <label
+                  htmlFor="confirm-password"
+                  className="mb-1.5 block text-xs font-medium text-[#1F2937]"
+                >
                   Confirm New Password
                 </label>
+
                 <input
+                  id="confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none transition focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+                  className="w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#1F2937] outline-none transition placeholder:text-[#94A3B8] focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
                 />
               </div>
 
-              <div className="rounded-md border border-gray-200 bg-gray-50/50 p-2.5">
-                <p className="text-[11px] leading-relaxed text-gray-500">
+              {/* Password Requirement */}
+              <div className="rounded-lg border border-[#E5E7EB] bg-[#F8F7F2] p-3">
+                <p className="text-[11px] leading-relaxed text-[#64748B]">
                   For security, use a password with at least 8 characters.
                 </p>
               </div>
 
               {/* Action */}
-              <div className="flex justify-end border-t border-gray-100 pt-3">
+              <div className="flex justify-end border-t border-[#E5E7EB] pt-4">
                 <button
                   type="button"
                   onClick={handleChangePassword}
                   disabled={saving}
-                  className="flex items-center gap-1.5 rounded-md border border-amber-200/60 bg-[#EFEABB] px-3.5 py-1.5 text-xs font-semibold text-gray-900 shadow-sm transition hover:bg-[#e3dc9e] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#292A24] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Lock size={13} />
+                  <Lock size={14} />
+
                   {saving ? "Updating..." : "Change Password"}
                 </button>
               </div>
@@ -393,40 +418,80 @@ function Account() {
   );
 }
 
+/* Profile Information Skeleton */
 function ProfileInformationSkeleton() {
   return (
-    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" role="status">
-      <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
-        <User size={15} className="text-gray-400" />
-        <span>Profile Information</span>
+    <section
+      className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white"
+      role="status"
+    >
+      <div className="flex items-center gap-2 border-b border-[#E5E7EB] bg-[#F8F7F2] px-4 py-3">
+        <User size={15} className="text-[#94A3B8]" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#1F2937]">
+          Profile Information
+        </span>
       </div>
+
       <div className="space-y-4 p-4">
         {Array.from({ length: 4 }, (_, index) => (
-          <div key={index}><Skeleton className="mb-1 h-3 w-20" /><Skeleton className="h-8 w-full rounded-md" /></div>
+          <div key={index}>
+            <Skeleton className="mb-1.5 h-3 w-20" />
+            <Skeleton className="h-9 w-full rounded-lg" />
+          </div>
         ))}
-        <div><Skeleton className="mb-1 h-3 w-24" /><Skeleton className="h-4 w-14 rounded-full" /></div>
-        <div className="flex justify-end gap-2 border-t border-gray-100 pt-3"><Skeleton className="h-7 w-14 rounded-md" /><Skeleton className="h-7 w-24 rounded-md" /></div>
+
+        <div>
+          <Skeleton className="mb-1.5 h-3 w-24" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-[#E5E7EB] pt-4">
+          <Skeleton className="h-9 w-16 rounded-lg" />
+          <Skeleton className="h-9 w-28 rounded-lg" />
+        </div>
       </div>
-      <span className="sr-only">Loading profile information...</span>
+
+      <span className="sr-only">
+        Loading profile information...
+      </span>
     </section>
   );
 }
 
+/* Change Password Skeleton */
 function ChangePasswordSkeleton() {
   return (
-    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" role="status">
-      <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
-        <Lock size={15} className="text-gray-400" />
-        <span>Change Password</span>
+    <section
+      className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white"
+      role="status"
+    >
+      <div className="flex items-center gap-2 border-b border-[#E5E7EB] bg-[#F8F7F2] px-4 py-3">
+        <Lock size={15} className="text-[#94A3B8]" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#1F2937]">
+          Change Password
+        </span>
       </div>
+
       <div className="space-y-4 p-4">
         {Array.from({ length: 3 }, (_, index) => (
-          <div key={index}><Skeleton className="mb-1 h-3 w-28" /><Skeleton className="h-8 w-full rounded-md" /></div>
+          <div key={index}>
+            <Skeleton className="mb-1.5 h-3 w-28" />
+            <Skeleton className="h-9 w-full rounded-lg" />
+          </div>
         ))}
-        <div className="rounded-md border border-gray-100 bg-gray-50/70 p-2.5"><Skeleton className="h-3 w-full" /></div>
-        <div className="flex justify-end border-t border-gray-100 pt-3"><Skeleton className="h-7 w-28 rounded-md" /></div>
+
+        <div className="rounded-lg border border-[#E5E7EB] bg-[#F8F7F2] p-3">
+          <Skeleton className="h-3 w-full" />
+        </div>
+
+        <div className="flex justify-end border-t border-[#E5E7EB] pt-4">
+          <Skeleton className="h-9 w-32 rounded-lg" />
+        </div>
       </div>
-      <span className="sr-only">Loading security settings...</span>
+
+      <span className="sr-only">
+        Loading security settings...
+      </span>
     </section>
   );
 }

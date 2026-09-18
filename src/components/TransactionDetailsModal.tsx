@@ -2,12 +2,8 @@ import { useEffect, useState } from "react";
 import {
   X,
   Receipt,
-  Calendar,
-  Clock,
-  User,
-  CreditCard,
+  Loader2,
 } from "lucide-react";
-import { CardSkeleton } from "./LoadingSkeleton";
 import { API_URL } from "../services/api";
 
 interface TransactionItem {
@@ -24,16 +20,21 @@ interface TransactionDetails {
   saleDate: string;
   total: number;
   paymentMethod: string;
+  status: string;
+  voidReason?: string | null;
+
   branch: {
-  id: number;
-  code: string;
-  name: string;
+    id: number;
+    code: string;
+    name: string;
   };
+
   cashier: {
     id: number;
     username: string;
     name: string;
   };
+
   items: TransactionItem[];
 }
 
@@ -80,7 +81,8 @@ function TransactionDetailsModal({
         );
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
+          const errorData =
+            await response.json().catch(() => null);
 
           throw new Error(
             errorData?.message ||
@@ -88,7 +90,8 @@ function TransactionDetailsModal({
           );
         }
 
-        const result: TransactionDetails = await response.json();
+        const result: TransactionDetails =
+          await response.json();
 
         setTransaction(result);
       } catch (err) {
@@ -116,7 +119,6 @@ function TransactionDetailsModal({
     return null;
   }
 
-  // Format sale date
   const saleDate = transaction
     ? new Date(transaction.saleDate)
     : null;
@@ -131,229 +133,253 @@ function TransactionDetailsModal({
 
   const formattedTime = saleDate
     ? saleDate.toLocaleTimeString("en-US", {
-        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
       })
     : "";
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl"
+        className="relative w-full max-w-sm"
         onClick={(event) => event.stopPropagation()}
       >
-        {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-gray-500" />
 
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900">
-              Transaction Details
-            </h3>
-          </div>
+        {/* CLOSE BUTTON */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close transaction details"
+          className="absolute -right-2 -top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-500 shadow-md transition hover:bg-gray-100 hover:text-gray-900"
+        >
+          <X size={15} />
+        </button>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 transition hover:bg-gray-200/60 hover:text-gray-700"
-          >
-            <X size={16} />
-          </button>
-        </div>
+        {/* RECEIPT */}
+        <div className="overflow-hidden bg-white shadow-2xl">
 
-        {/* CONTENT */}
-        <div className="max-h-[80vh] overflow-y-auto p-5">
-          {/* LOADING */}
-          {loading ? (
-            <div className="space-y-5">
-              <CardSkeleton lines={3} />
-              <CardSkeleton lines={5} />
-            </div>
-          ) : error ? (
-            /* ERROR */
-            <div className="flex min-h-64 flex-col items-center justify-center text-center">
-              <Receipt className="mb-3 h-8 w-8 text-red-300" />
+          {/* RECEIPT TOP */}
+          <div className="px-7 pb-5 pt-7 text-center">
 
-              <p className="text-xs font-medium text-red-500">
-                Unable to load transaction
-              </p>
+            <Receipt className="mx-auto mb-3 h-7 w-7 text-gray-700" />
 
-              <p className="mt-1 max-w-xs text-[11px] text-gray-500">
-                {error}
-              </p>
-            </div>
-          ) : transaction ? (
-            <>
-              {/* TRANSACTION NUMBER */}
-              <div className="mb-4 rounded-lg border border-gray-100 bg-gray-50 p-3 text-center">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-gray-400">
-                  Transaction ID
-                </span>
+            <h2 className="text-lg font-bold uppercase tracking-[0.18em] text-gray-900">
+              Denbert's
+            </h2>
 
-                <p className="text-lg font-bold text-gray-900">
-                  #{String(transaction.id).padStart(5, "0")}
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-gray-500">
+              Goto, Pares at iba pa
+            </p>
+
+            <div className="mt-5 border-t border-dashed border-gray-300" />
+
+            <p className="mt-4 text-[10px] font-medium uppercase tracking-[0.15em] text-gray-500">
+              Sales Receipt
+            </p>
+
+            {loading ? (
+              <div className="flex min-h-64 items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2
+                    size={24}
+                    className="animate-spin text-gray-500"
+                  />
+
+                  <p className="text-xs text-gray-500">
+                    Loading transaction...
+                  </p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="flex min-h-64 flex-col items-center justify-center text-center">
+                <p className="text-sm font-semibold text-red-600">
+                  Unable to load transaction
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  {error}
                 </p>
               </div>
+            ) : transaction ? (
+              <div className="mt-4 text-left">
 
-              {/* TRANSACTION INFORMATION */}
-              <div className="mb-5 grid grid-cols-2 gap-2 text-xs">
-                {/* DATE */}
-                <div className="flex items-center gap-2 rounded-md border border-gray-100 bg-white p-2">
-                  <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                {/* TRANSACTION INFORMATION */}
+                <div className="space-y-1.5 text-[11px] text-gray-600">
 
-                  <div>
-                    <span className="block text-[10px] uppercase text-gray-400">
-                      Date
+                  <div className="flex justify-between gap-4">
+                    <span>Transaction ID</span>
+
+                    <span className="font-semibold text-gray-900">
+                      #{String(transaction.id).padStart(5, "0")}
                     </span>
+                  </div>
 
-                    <span className="font-medium text-gray-700">
+                  <div className="flex justify-between gap-4">
+                    <span>Date</span>
+
+                    <span className="font-medium text-gray-900">
                       {formattedDate}
                     </span>
                   </div>
-                </div>
 
-                {/* TIME */}
-                <div className="flex items-center gap-2 rounded-md border border-gray-100 bg-white p-2">
-                  <Clock className="h-3.5 w-3.5 text-gray-400" />
+                  <div className="flex justify-between gap-4">
+                    <span>Time</span>
 
-                  <div>
-                    <span className="block text-[10px] uppercase text-gray-400">
-                      Time
-                    </span>
-
-                    <span className="font-medium text-gray-700">
+                    <span className="font-medium text-gray-900">
                       {formattedTime}
                     </span>
                   </div>
-                </div>
 
-                {/* BRANCH */}
-                <div className="col-span-2 rounded-md border border-gray-100 bg-white p-2">
-                  <span className="block text-[10px] uppercase text-gray-400">
-                    Branch
-                  </span>
+                  <div className="flex justify-between gap-4">
+                    <span>Branch</span>
 
-                  <span className="font-medium text-gray-700">
-                    {transaction.branch.name}
-                  </span>
-                </div>
-
-                {/* CASHIER */}
-                <div className="col-span-2 flex items-center gap-2 rounded-md border border-gray-100 bg-white p-2">
-                  <User className="h-3.5 w-3.5 text-gray-400" />
-
-                  <div>
-                    <span className="block text-[10px] uppercase text-gray-400">
-                      Cashier
-                    </span>
-
-                    <span className="font-medium text-gray-700">
-                      {transaction.cashier.name}
-                    </span>
-
-                    <span className="ml-2 text-[10px] text-gray-400">
-                      @{transaction.cashier.username}
+                    <span className="font-medium text-right text-gray-900">
+                      {transaction.branch.name}
                     </span>
                   </div>
+
+                  <div className="flex justify-between gap-4">
+                    <span>Cashier</span>
+
+                    <span className="font-medium text-right text-gray-900">
+                      {transaction.cashier.name}
+                    </span>
+                  </div>
+
                 </div>
-              </div>
 
-              {/* ITEMS */}
-              <div className="mb-5 overflow-hidden rounded-lg border border-gray-200">
-                <div className="border-b border-gray-200 bg-gray-50 px-3 py-2">
-                  <h4 className="text-[11px] font-semibold uppercase tracking-wider text-gray-600">
-                    Items
-                  </h4>
+                {/* DIVIDER */}
+                <div className="my-5 border-t border-dashed border-gray-300" />
+
+                {/* ITEMS HEADER */}
+                <div className="mb-3 grid grid-cols-[1fr_auto_auto] gap-3 text-[9px] font-semibold uppercase tracking-wider text-gray-400">
+                  <span>Item</span>
+                  <span className="text-center">Qty</span>
+                  <span className="text-right">Amount</span>
                 </div>
 
-                <table className="w-full border-collapse text-left text-xs">
-                  <thead className="border-b border-gray-200 bg-white font-semibold uppercase text-gray-500">
-                    <tr>
-                      <th className="px-3 py-2">
-                        Item
-                      </th>
+                {/* ITEMS */}
+                <div className="space-y-3">
 
-                      <th className="px-3 py-2 text-center">
-                        Qty
-                      </th>
+                  {transaction.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-[1fr_auto_auto] gap-3 text-[11px]"
+                    >
 
-                      <th className="px-3 py-2 text-right">
-                        Price
-                      </th>
+                      {/* PRODUCT */}
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900">
+                          {item.product}
+                        </p>
 
-                      <th className="px-3 py-2 text-right">
-                        Subtotal
-                      </th>
-                    </tr>
-                  </thead>
+                        <p className="mt-0.5 text-[9px] text-gray-400">
+                          ₱{Number(item.price).toFixed(2)} each
+                        </p>
+                      </div>
 
-                  <tbody className="divide-y divide-gray-100 text-gray-700">
-                    {transaction.items.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="transition hover:bg-gray-50/50"
-                      >
-                        {/* PRODUCT */}
-                        <td className="px-3 py-2">
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {item.product}
-                            </p>
+                      {/* QUANTITY */}
+                      <div className="text-center font-medium text-gray-600">
+                        {item.quantity}
+                      </div>
 
-                            <p className="text-[9px] text-gray-400">
-                              ID: #{item.productId}
-                            </p>
-                          </div>
-                        </td>
+                      {/* SUBTOTAL */}
+                      <div className="text-right font-semibold text-gray-900">
+                        ₱{Number(item.subtotal).toFixed(2)}
+                      </div>
 
-                        {/* QUANTITY */}
-                        <td className="px-3 py-2 text-center">
-                          {item.quantity}
-                        </td>
+                    </div>
+                  ))}
 
-                        {/* PRICE */}
-                        <td className="px-3 py-2 text-right">
-                          ₱{Number(item.price).toFixed(2)}
-                        </td>
+                </div>
 
-                        {/* SUBTOTAL */}
-                        <td className="px-3 py-2 text-right font-semibold text-gray-900">
-                          ₱{Number(item.subtotal).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                {/* DIVIDER */}
+                <div className="my-5 border-t border-dashed border-gray-300" />
 
-              {/* SUMMARY */}
-              <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50 p-3.5 text-xs">
-                {/* PAYMENT METHOD */}
-                <div className="flex items-center justify-between text-gray-600">
-                  <span className="flex items-center gap-1.5">
-                    <CreditCard className="h-3.5 w-3.5 text-gray-400" />
-
+                {/* PAYMENT */}
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-gray-500">
                     Payment Method
                   </span>
 
-                  <span className="rounded-full bg-gray-200 px-2 py-1 text-[10px] font-semibold text-gray-700">
+                  <span className="font-semibold uppercase text-gray-900">
                     {transaction.paymentMethod}
                   </span>
                 </div>
 
                 {/* TOTAL */}
-                <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-sm font-bold text-gray-900">
-                  <span>Total Amount</span>
+                <div className="mt-4 flex items-center justify-between border-t border-gray-900 pt-4">
+                  <span className="text-sm font-bold uppercase tracking-wider text-gray-900">
+                    Total
+                  </span>
 
-                  <span className="text-base">
+                  <span className="text-xl font-bold text-gray-900">
                     ₱{Number(transaction.total).toFixed(2)}
                   </span>
                 </div>
+
+                {/* STATUS */}
+                <div className="mt-5 flex items-center justify-center">
+
+                  {transaction.status === "VOIDED" ? (
+                    <span className="inline-flex items-center rounded-full border border-red-300 bg-red-50 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-red-600">
+                      VOIDED
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full border border-green-300 bg-green-50 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-green-600">
+                      COMPLETED
+                    </span>
+                  )}
+
+                </div>
+
+                {/* VOID REASON */}
+                {transaction.status === "VOIDED" &&
+                  transaction.voidReason && (
+                    <div className="mt-4 border-t border-dashed border-gray-300 pt-3 text-center">
+                      <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400">
+                        Void Reason
+                      </p>
+
+                      <p className="mt-1 text-[10px] text-gray-600">
+                        {transaction.voidReason}
+                      </p>
+                    </div>
+                  )}
+
+                {/* FOOTER */}
+                <div className="mt-6 border-t border-dashed border-gray-300 pt-5 text-center">
+
+                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500">
+                    Thank you for your purchase!
+                  </p>
+
+                  <p className="mt-1 text-[9px] text-gray-400">
+                    Please keep this receipt for your records.
+                  </p>
+
+                </div>
+
               </div>
-            </>
-          ) : null}
+            ) : null}
+
+          </div>
+
+          {/* RECEIPT BOTTOM / PAPER EDGE */}
+          <div
+            className="h-3"
+            style={{
+              backgroundImage:
+                "linear-gradient(135deg, transparent 5px, white 0) , linear-gradient(45deg, transparent 5px, white 0)",
+              backgroundSize: "10px 10px",
+              backgroundPosition: "0 0, 5px 0",
+            }}
+          />
+
         </div>
       </div>
     </div>

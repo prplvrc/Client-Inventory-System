@@ -7,16 +7,26 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react";
+
 import InventoryForm from "./InventoryForm";
 import { TableSkeleton } from "./LoadingSkeleton";
 import { API_URL } from "../services/api";
 import { useBranch } from "../hooks/useBranch";
+
+import PageHeader from "../components/ui/PageHeader";
+import StatusBadge from "../components/ui/StatusBadge";
 
 interface Ingredient {
   id: number;
   name: string;
   unit: string;
   status: string;
+}
+
+interface Branch {
+  id: number;
+  code: string;
+  name: string;
 }
 
 interface InventoryItem {
@@ -38,12 +48,6 @@ interface InventoryResponse {
   page: number;
   limit: number;
   totalPages: number;
-}
-
-interface Branch {
-  id: number;
-  code: string;
-  name: string;
 }
 
 interface PreparedBatch {
@@ -76,7 +80,8 @@ function Inventory() {
   const [activeTab, setActiveTab] =
     useState<InventoryTab>("RAW");
 
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [inventory, setInventory] =
+    useState<InventoryItem[]>([]);
 
   const [preparedBatches, setPreparedBatches] =
     useState<PreparedBatch[]>([]);
@@ -106,25 +111,17 @@ function Inventory() {
   const [selectedInventory, setSelectedInventory] =
     useState<InventoryItem | null>(null);
 
-  const [dateTime, setDateTime] = useState(new Date());
-
   const {
-  selectedBranchId,
-  selectedBranch,
+    selectedBranchId,
+    selectedBranch,
   } = useBranch();
 
-  
-
   const limit = 10;
-  // Real-time Clock
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setDateTime(new Date());
-    }, 1000);
 
-    return () => clearInterval(timer);
-  }, []);
-  // Debounce Filters
+  // =========================================================
+  // DEBOUNCE FILTERS
+  // =========================================================
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -134,42 +131,76 @@ function Inventory() {
 
     return () => clearTimeout(timer);
   }, [search, unit, status]);
-  // Fetch Inventory
+
+  // =========================================================
+  // FETCH INVENTORY
+  // =========================================================
+
   const fetchInventory = async (targetPage?: number) => {
     try {
       setLoading(true);
       setError("");
 
       if (!API_URL) {
-        throw new Error("VITE_API_URL is not configured.");
+        throw new Error(
+          "VITE_API_URL is not configured."
+        );
       }
+
       const activePage = targetPage ?? page;
+
       const params = new URLSearchParams();
 
       if (debouncedSearch.trim()) {
-        params.append("search", debouncedSearch.trim());
+        params.append(
+          "search",
+          debouncedSearch.trim()
+        );
       }
 
       if (debouncedUnit.trim()) {
-        params.append("unit", debouncedUnit.trim());
+        params.append(
+          "unit",
+          debouncedUnit.trim()
+        );
       }
 
       if (debouncedStatus.trim()) {
-        params.append("status", debouncedStatus.trim());
+        params.append(
+          "status",
+          debouncedStatus.trim()
+        );
       }
 
       // Only send branchId when a specific branch is selected
-      if (selectedBranchId && selectedBranchId !== "ALL") {
-        params.append("branchId", String(selectedBranchId));
+      if (
+        selectedBranchId &&
+        selectedBranchId !== "ALL"
+      ) {
+        params.append(
+          "branchId",
+          String(selectedBranchId)
+        );
       }
 
-      params.append("page", String(activePage));
-      params.append("limit", String(limit));
+      params.append(
+        "page",
+        String(activePage)
+      );
 
-      const token = localStorage.getItem("token");
+      params.append(
+        "limit",
+        String(limit)
+      );
+
+      const token =
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token");
 
       if (!token) {
-        throw new Error("You are not logged in.");
+        throw new Error(
+          "You are not logged in."
+        );
       }
 
       const response = await fetch(
@@ -184,11 +215,13 @@ function Inventory() {
       );
 
       if (!response.ok) {
-        let message = `Failed to fetch inventory: ${response.status}`;
+        let message =
+          `Failed to fetch inventory: ${response.status}`;
 
         try {
           const result = await response.json();
-          message = result.message || message;
+          message =
+            result.message || message;
         } catch {
           // Response was not JSON
         }
@@ -196,12 +229,18 @@ function Inventory() {
         throw new Error(message);
       }
 
-      const result: InventoryResponse = await response.json();
+      const result: InventoryResponse =
+        await response.json();
 
       setInventory(result.data ?? []);
-      setTotalPages(result.totalPages ?? 1);
+      setTotalPages(
+        result.totalPages ?? 1
+      );
     } catch (err) {
-      console.error("Fetch inventory error:", err);
+      console.error(
+        "Fetch inventory error:",
+        err
+      );
 
       setInventory([]);
 
@@ -225,76 +264,106 @@ function Inventory() {
     selectedBranchId,
   ]);
 
+  // =========================================================
+  // FETCH PREPARED BATCHES
+  // =========================================================
+
+  const fetchPreparedBatches = async () => {
+    try {
+      setPreparedBatchLoading(true);
+      setError("");
+
+      if (!API_URL) {
+        throw new Error(
+          "VITE_API_URL is not configured."
+        );
+      }
+
+      const token =
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token");
+
+      if (!token) {
+        throw new Error(
+          "You are not logged in."
+        );
+      }
+
+      const params = new URLSearchParams();
+
+      if (
+        selectedBranchId &&
+        selectedBranchId !== "ALL"
+      ) {
+        params.append(
+          "branchId",
+          String(selectedBranchId)
+        );
+      }
+
+      const response = await fetch(
+        `${API_URL}/prepared-batches?${params.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        let message =
+          `Failed to fetch prepared batches: ${response.status}`;
+
+        try {
+          const result = await response.json();
+          message =
+            result.message || message;
+        } catch {
+          // Response was not JSON
+        }
+
+        throw new Error(message);
+      }
+
+      const result =
+        await response.json();
+
+      setPreparedBatches(
+        result.data ?? []
+      );
+    } catch (err) {
+      console.error(
+        "Fetch prepared batches error:",
+        err
+      );
+
+      setPreparedBatches([]);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load prepared batches."
+      );
+    } finally {
+      setPreparedBatchLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === "PREPARED") {
       fetchPreparedBatches();
     }
-  }, [activeTab, selectedBranchId]);
+  }, [
+    activeTab,
+    selectedBranchId,
+  ]);
 
-// Fetch Prepared Batches
-const fetchPreparedBatches = async () => {
-  try {
-    setPreparedBatchLoading(true);
+  // =========================================================
+  // ADD INVENTORY
+  // =========================================================
 
-    if (!API_URL) {
-      throw new Error("VITE_API_URL is not configured.");
-    }
-
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      throw new Error("You are not logged in.");
-    }
-
-    const params = new URLSearchParams();
-
-    if (selectedBranchId && selectedBranchId !== "ALL") {
-      params.append("branchId", String(selectedBranchId));
-    }
-
-    const response = await fetch(
-      `${API_URL}/prepared-batches?${params.toString()}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      let message = `Failed to fetch prepared batches: ${response.status}`;
-
-      try {
-        const result = await response.json();
-        message = result.message || message;
-      } catch {
-        // Response was not JSON
-      }
-
-      throw new Error(message);
-    }
-
-    const result = await response.json();
-
-    setPreparedBatches(result.data ?? []);
-  } catch (err) {
-    console.error("Fetch prepared batches error:", err);
-
-    setPreparedBatches([]);
-
-    setError(
-      err instanceof Error
-        ? err.message
-        : "Unable to load prepared batches."
-    );
-  } finally {
-    setPreparedBatchLoading(false);
-  }
-};
-
-  // Add Inventory
   const handleAdd = () => {
     if (selectedBranchId === "ALL") {
       setError(
@@ -304,16 +373,30 @@ const fetchPreparedBatches = async () => {
       return;
     }
 
+    setError("");
     setSelectedInventory(null);
     setShowForm(true);
   };
-  // Edit Inventory
-  const handleEdit = (item: InventoryItem) => {
+
+  // =========================================================
+  // EDIT INVENTORY
+  // =========================================================
+
+  const handleEdit = (
+    item: InventoryItem
+  ) => {
+    setError("");
     setSelectedInventory(item);
     setShowForm(true);
   };
-  // Delete Inventory
-  const handleDelete = async (id: number) => {
+
+  // =========================================================
+  // DELETE INVENTORY
+  // =========================================================
+
+  const handleDelete = async (
+    id: number
+  ) => {
     if (
       !window.confirm(
         "Are you sure you want to delete this inventory item?"
@@ -326,13 +409,19 @@ const fetchPreparedBatches = async () => {
       setError("");
 
       if (!API_URL) {
-        throw new Error("VITE_API_URL is not configured.");
+        throw new Error(
+          "VITE_API_URL is not configured."
+        );
       }
 
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token");
 
       if (!token) {
-        throw new Error("You are not logged in.");
+        throw new Error(
+          "You are not logged in."
+        );
       }
 
       const response = await fetch(
@@ -347,11 +436,13 @@ const fetchPreparedBatches = async () => {
       );
 
       if (!response.ok) {
-        let message = "Failed to delete inventory item.";
+        let message =
+          "Failed to delete inventory item.";
 
         try {
           const result = await response.json();
-          message = result.message || message;
+          message =
+            result.message || message;
         } catch {
           // Response was not JSON
         }
@@ -361,7 +452,10 @@ const fetchPreparedBatches = async () => {
 
       await fetchInventory();
     } catch (err) {
-      console.error("Delete inventory error:", err);
+      console.error(
+        "Delete inventory error:",
+        err
+      );
 
       setError(
         err instanceof Error
@@ -370,83 +464,65 @@ const fetchPreparedBatches = async () => {
       );
     }
   };
-  // Reset Filters
+
+  // =========================================================
+  // RESET FILTERS
+  // =========================================================
+
   const handleReset = () => {
     setSearch("");
     setUnit("");
     setStatus("");
     setPage(1);
   };
-  // Stock Level
-  const getStockLevel = (stock: number) => {
+
+  // =========================================================
+  // STOCK LEVEL
+  // =========================================================
+
+  const getStockLevel = (
+    stock: number
+  ) => {
     if (stock <= 0) {
-      return "OUT OF STOCK";
+      return "OUT_OF_STOCK";
     }
 
     if (stock <= 10) {
-      return "LOW STOCK";
+      return "LOW_STOCK";
     }
 
-    return "IN STOCK";
+    return "IN_STOCK";
   };
 
-  const getStockLevelClass = (stockLevel: string) => {
-    if (stockLevel === "IN STOCK") {
-      return "bg-green-100 text-green-800";
-    }
-
-    if (stockLevel === "LOW STOCK") {
-      return "bg-yellow-100 text-yellow-800";
-    }
-
-    return "bg-red-100 text-red-800";
-  };
+  // =========================================================
+  // RENDER
+  // =========================================================
 
   return (
     <div className="w-full p-4 sm:p-6">
 
-      {/* HEADER */}
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="pl-12 lg:pl-0">
-          <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
-            Inventory
-          </h1>
-
-          <p className="text-xs text-gray-500">
-            Manage inventory items and keep track of stock levels
-            {selectedBranch ? ` (${selectedBranch.name})` : " (All Branches)"}.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4 text-xs font-medium text-gray-600">
-          <span>
-            DATE:{" "}
-            {dateTime.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>
-
-          <span>
-            TIME:{" "}
-            {dateTime.toLocaleTimeString("en-US", {
-              hour12: false,
-            })}
-          </span>
-        </div>
-      </div>
+      {/* PAGE HEADER */}
+      <PageHeader
+        title="Inventory"
+        description={
+          selectedBranch
+            ? `Manage raw ingredients and prepared batches for ${selectedBranch.name}.`
+            : "Manage raw ingredients and prepared batches across all branches."
+        }
+      />
 
       {/* INVENTORY TABS */}
-      <div className="mb-4 flex">
-        <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-1">
+      <div className="mb-4">
+        <div className="inline-flex rounded-lg border border-[#E5E7EB] bg-white p-1">
           <button
             type="button"
-            onClick={() => setActiveTab("RAW")}
+            onClick={() =>
+              setActiveTab("RAW")
+            }
             className={
               activeTab === "RAW"
-                ? "rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                : "rounded-md px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                ? "rounded-md bg-[#292A24] px-4 py-2 text-xs font-medium text-white"
+                : "rounded-md px-4 py-2 text-xs font-medium text-[#64748B] hover:bg-[#F8F7F2]"
             }
           >
             Raw Ingredients
@@ -454,11 +530,13 @@ const fetchPreparedBatches = async () => {
 
           <button
             type="button"
-            onClick={() => setActiveTab("PREPARED")}
+            onClick={() =>
+              setActiveTab("PREPARED")
+            }
             className={
               activeTab === "PREPARED"
-                ? "rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                : "rounded-md px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                ? "rounded-md bg-[#292A24] px-4 py-2 text-xs font-medium text-white"
+                : "rounded-md px-4 py-2 text-xs font-medium text-[#64748B] hover:bg-[#F8F7F2]"
             }
           >
             Prepared Batches
@@ -466,442 +544,539 @@ const fetchPreparedBatches = async () => {
         </div>
       </div>
 
-      {/* ACTION BAR */}
+      {/* RAW INVENTORY ACTION BAR */}
       {activeTab === "RAW" && (
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-        {/* SEARCH */}
-        <div className="flex flex-1 items-center gap-3">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+          {/* SEARCH */}
+          <div className="relative w-full max-w-sm">
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]"
+              aria-hidden="true"
+            />
 
             <input
               type="text"
               value={search}
               onChange={(e) => {
-                setSearch(e.target.value);
+                setSearch(
+                  e.target.value
+                );
                 setPage(1);
               }}
               placeholder="Search inventory..."
-              className="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full rounded-lg border border-[#E5E7EB] bg-white py-2 pl-9 pr-3 text-xs text-[#1F2937] placeholder:text-[#94A3B8] outline-none transition focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
             />
           </div>
+
+          {/* ACTIONS */}
+          <div className="flex items-center gap-2">
+
+            {/* FILTER */}
+            <button
+              type="button"
+              onClick={() =>
+                setShowFilters(
+                  (prev) => !prev
+                )
+              }
+              className="inline-flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#1F2937] transition hover:bg-gray-50"
+            >
+              <SlidersHorizontal
+                size={14}
+              />
+              Filters
+            </button>
+
+            {/* ADD */}
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#292A24] px-3 py-2 text-xs font-medium text-white transition hover:opacity-90"
+            >
+              <Plus size={14} />
+              Add Inventory
+            </button>
+          </div>
         </div>
-
-        <div className="flex items-center gap-2">
-
-          {/* FILTER */}
-          <button
-            type="button"
-            onClick={() =>
-              setShowFilters((prev) => !prev)
-            }
-            className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
-          >
-            <SlidersHorizontal size={14} />
-            Filters
-          </button>
-
-          {/* ADD */}
-          <button
-            type="button"
-            onClick={handleAdd}
-            className="flex items-center gap-1.5 rounded-md border border-[#d6d09b] bg-[#EFEABB] px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-sm transition hover:bg-[#e3dc9e]"
-          >
-            <Plus size={14} />
-            Add
-          </button>
-        </div>
-      </div>
       )}
 
       {/* FILTERS */}
-      {activeTab === "RAW" && showFilters && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+      {activeTab === "RAW" &&
+        showFilters && (
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white p-3">
 
-          <input
-            type="text"
-            value={unit}
-            onChange={(e) => {
-              setUnit(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Filter by Unit"
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
-          />
+            {/* UNIT FILTER */}
+            <input
+              type="text"
+              value={unit}
+              onChange={(e) => {
+                setUnit(
+                  e.target.value
+                );
+                setPage(1);
+              }}
+              placeholder="Filter by Unit"
+              className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#1F2937] outline-none focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
+            />
 
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 outline-none focus:border-black"
-          >
-            <option value="">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-          </select>
+            {/* STATUS FILTER */}
+            <select
+              value={status}
+              onChange={(e) => {
+                setStatus(
+                  e.target.value
+                );
+                setPage(1);
+              }}
+              className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs text-[#1F2937] outline-none focus:border-[#292A24] focus:ring-1 focus:ring-[#292A24]"
+            >
+              <option value="">
+                All Status
+              </option>
 
-          <button
-            type="button"
-            onClick={handleReset}
-            className="flex items-center gap-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100"
-          >
-            <RefreshCw size={12} />
-            Reset
-          </button>
-        </div>
-      )}
+              <option value="ACTIVE">
+                Active
+              </option>
+
+              <option value="INACTIVE">
+                Inactive
+              </option>
+            </select>
+
+            {/* RESET */}
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#1F2937] transition hover:bg-gray-50"
+            >
+              <RefreshCw
+                size={12}
+              />
+              Reset
+            </button>
+          </div>
+        )}
 
       {/* ERROR */}
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600">
           {error}
         </div>
       )}
 
-      {/* RAW INGREDIENTS TABLE */}
+      {/* =====================================================
+          RAW INGREDIENTS
+      ====================================================== */}
+
       {activeTab === "RAW" && (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <>
+          <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+            <div className="overflow-x-auto">
 
-          <table className="w-full border-collapse text-left text-xs text-gray-700">
+              <table className="w-full border-collapse text-left text-xs text-[#1F2937]">
 
-            <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
+                <thead className="border-b border-[#E5E7EB] bg-[#F8F7F2] font-semibold uppercase tracking-wider text-[#64748B]">
 
-              <tr>
+                  <tr>
 
-                <th className="w-16 border-r border-gray-200 px-4 py-2.5 text-center">
-                  ID
-                </th>
+                    <th className="w-16 px-4 py-2.5 text-center">
+                      ID
+                    </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
-                  Ingredient
-                </th>
+                    <th className="px-4 py-2.5 text-center">
+                      Ingredient
+                    </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
-                  Branch
-                </th>
+                    <th className="px-4 py-2.5 text-center">
+                      Branch
+                    </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
-                  Unit
-                </th>
+                    <th className="px-4 py-2.5 text-center">
+                      Unit
+                    </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
-                  Initial Stock
-                </th>
+                    <th className="px-4 py-2.5 text-center">
+                      Initial Stock
+                    </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
-                  Available Stock
-                </th>
+                    <th className="px-4 py-2.5 text-center">
+                      Available Stock
+                    </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
-                  Stock Level
-                </th>
+                    <th className="px-4 py-2.5 text-center">
+                      Stock Level
+                    </th>
 
-                <th className="border-r border-gray-200 px-4 py-2.5 text-center">
-                  Status
-                </th>
+                    <th className="px-4 py-2.5 text-center">
+                      Status
+                    </th>
 
-                <th className="px-4 py-2.5 text-center">
-                  Actions
-                </th>
+                    <th className="px-4 py-2.5 text-center">
+                      Actions
+                    </th>
 
-              </tr>
+                  </tr>
 
-            </thead>
+                </thead>
 
-            <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#E5E7EB]">
 
-              {loading ? (
-                <TableSkeleton columns={8} />
-              ) : inventory.length === 0 ? (
+                  {loading ? (
+                    <TableSkeleton
+                      columns={9}
+                    />
+                  ) : inventory.length === 0 ? (
 
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="py-12 text-center text-gray-500"
-                  >
-                    No inventory items found.
-                  </td>
-                </tr>
-
-              ) : (
-
-                inventory.map((item) => {
-
-                  const stockLevel = getStockLevel(
-                    Number(item.availableStock)
-                  );
-
-                  return (
-                    <tr
-                      key={item.id}
-                      className="transition hover:bg-gray-50/80"
-                    >
-
-                      {/* ID */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center font-medium text-gray-500">
-                        #{item.id}
+                    <tr>
+                      <td
+                        colSpan={9}
+                        className="px-4 py-12 text-center text-[#64748B]"
+                      >
+                        No inventory items found.
                       </td>
-
-                      {/* INGREDIENT */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 font-semibold text-gray-900">
-                        {item.ingredient?.name ?? "—"}
-                      </td>
-
-                      {/* BRANCH */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
-                        {item.branch.name}
-                      </td>
-
-                      {/* UNIT */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
-                        {item.ingredient?.unit ?? "—"}
-                      </td>
-
-                      {/* INITIAL STOCK */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-right font-medium text-gray-900">
-                        {Number(item.initialStock).toFixed(2)}
-                      </td>
-
-                      {/* AVAILABLE STOCK */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-right font-medium text-gray-900">
-                        {Number(item.availableStock).toFixed(2)}
-                      </td>
-
-                      {/* STOCK LEVEL */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
-                        <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${getStockLevelClass(
-                            stockLevel
-                          )}`}
-                        >
-                          {stockLevel}
-                        </span>
-                      </td>
-
-                      {/* STATUS */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
-                        <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            item.status === "ACTIVE"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-
-                      {/* ACTIONS */}
-                      <td className="px-4 py-2.5 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleEdit(item)
-                            }
-                            className="flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 transition hover:bg-emerald-100"
-                          >
-                            <Pencil size={11} />
-                            Edit
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleDelete(item.id)
-                            }
-                            className="flex items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 transition hover:bg-rose-100"
-                          >
-                            <Trash2 size={11} />
-                            Delete
-                          </button>
-
-                        </div>
-                      </td>
-
                     </tr>
-                  );
-                })
-              )}
 
-            </tbody>
+                  ) : (
 
-          </table>
+                    inventory.map(
+                      (item) => {
+                        const stockLevel =
+                          getStockLevel(
+                            Number(
+                              item.availableStock
+                            )
+                          );
 
-        </div>
-      </div>
+                        return (
+                          <tr
+                            key={item.id}
+                            className="transition hover:bg-[#F8F7F2]/60"
+                          >
+
+                            {/* ID */}
+                            <td className="px-4 py-2.5 text-center font-medium text-[#64748B]">
+                              #{item.id}
+                            </td>
+
+                            {/* INGREDIENT */}
+                            <td className="px-4 py-2.5 font-semibold text-[#1F2937]">
+                              {item.ingredient
+                                ?.name ??
+                                "—"}
+                            </td>
+
+                            {/* BRANCH */}
+                            <td className="px-4 py-2.5 text-center text-[#64748B]">
+                              {item.branch
+                                ?.name ??
+                                "—"}
+                            </td>
+
+                            {/* UNIT */}
+                            <td className="px-4 py-2.5 text-center text-[#64748B]">
+                              {item.ingredient
+                                ?.unit ??
+                                "—"}
+                            </td>
+
+                            {/* INITIAL STOCK */}
+                            <td className="px-4 py-2.5 text-right font-medium text-[#1F2937]">
+                              {Number(
+                                item.initialStock
+                              ).toFixed(2)}
+                            </td>
+
+                            {/* AVAILABLE STOCK */}
+                            <td className="px-4 py-2.5 text-right font-medium text-[#1F2937]">
+                              {Number(
+                                item.availableStock
+                              ).toFixed(2)}
+                            </td>
+
+                            {/* STOCK LEVEL */}
+                            <td className="px-4 py-2.5 text-center">
+                              <StatusBadge
+                                status={
+                                  stockLevel
+                                }
+                              />
+                            </td>
+
+                            {/* STATUS */}
+                            <td className="px-4 py-2.5 text-center">
+                              <StatusBadge
+                                status={
+                                  item.status
+                                }
+                              />
+                            </td>
+
+                            {/* ACTIONS */}
+                            <td className="px-4 py-2.5 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleEdit(
+                                      item
+                                    )
+                                  }
+                                  className="inline-flex items-center gap-1 rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[#1F2937] transition hover:bg-gray-50"
+                                >
+                                  <Pencil
+                                    size={11}
+                                  />
+                                  Edit
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleDelete(
+                                      item.id
+                                    )
+                                  }
+                                  className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-medium text-red-700 transition hover:bg-red-100"
+                                >
+                                  <Trash2
+                                    size={11}
+                                  />
+                                  Delete
+                                </button>
+
+                              </div>
+                            </td>
+
+                          </tr>
+                        );
+                      }
+                    )
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
+          </div>
+
+          {/* RAW PAGINATION */}
+          <div className="mt-4 flex items-center justify-between text-xs text-[#64748B]">
+
+            <span>
+              Page{" "}
+              <strong className="text-[#1F2937]">
+                {page}
+              </strong>{" "}
+              of{" "}
+              <strong className="text-[#1F2937]">
+                {totalPages}
+              </strong>
+            </span>
+
+            <div className="flex items-center gap-2">
+
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() =>
+                  setPage(
+                    (current) =>
+                      current - 1
+                  )
+                }
+                className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  page >= totalPages
+                }
+                onClick={() =>
+                  setPage(
+                    (current) =>
+                      current + 1
+                  )
+                }
+                className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+
+            </div>
+          </div>
+        </>
       )}
 
-      {/* PREPARED BATCHES TABLE */}
+      {/* =====================================================
+          PREPARED BATCHES
+      ====================================================== */}
+
       {activeTab === "PREPARED" && (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-xs text-gray-700">
-              <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
+
+            <table className="w-full border-collapse text-left text-xs text-[#1F2937]">
+
+              <thead className="border-b border-[#E5E7EB] bg-[#F8F7F2] font-semibold uppercase tracking-wider text-[#64748B]">
+
                 <tr>
-                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+
+                  <th className="px-4 py-2.5 text-center">
                     Batch #
                   </th>
 
-                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                  <th className="px-4 py-2.5 text-center">
                     Product
                   </th>
 
-                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                  <th className="px-4 py-2.5 text-center">
                     Prepared At
                   </th>
 
-                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                  <th className="px-4 py-2.5 text-center">
                     Prepared By
                   </th>
 
-                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                  <th className="px-4 py-2.5 text-center">
                     Status
                   </th>
 
-                  <th className="border-r border-gray-200 px-4 py-2.5 text-center">
+                  <th className="px-4 py-2.5 text-center">
                     Branch
                   </th>
 
                   <th className="px-4 py-2.5 text-center">
                     Actions
                   </th>
+
                 </tr>
+
               </thead>
 
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-[#E5E7EB]">
+
                 {preparedBatchLoading ? (
-                  <TableSkeleton columns={7} />
-                ) : preparedBatches.length === 0 ? (
+
+                  <TableSkeleton
+                    columns={7}
+                  />
+
+                ) : preparedBatches.length ===
+                  0 ? (
+
                   <tr>
                     <td
                       colSpan={7}
-                      className="py-12 text-center text-gray-500"
+                      className="px-4 py-12 text-center text-[#64748B]"
                     >
                       No prepared batches found.
                     </td>
                   </tr>
+
                 ) : (
-                  preparedBatches.map((batch) => (
-                    <tr
-                      key={batch.id}
-                      className="transition hover:bg-gray-50/80"
-                    >
-                      {/* BATCH NUMBER */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center font-medium text-gray-500">
-                        #{batch.id}
-                      </td>
 
-                      {/* PRODUCT */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 font-semibold text-gray-900">
-                        {batch.product?.name ?? "—"}
-                      </td>
+                  preparedBatches.map(
+                    (batch) => (
+                      <tr
+                        key={batch.id}
+                        className="transition hover:bg-[#F8F7F2]/60"
+                      >
 
-                      {/* PREPARED AT */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center text-gray-600">
-                        {new Date(batch.preparedAt).toLocaleString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
-                      </td>
+                        {/* BATCH NUMBER */}
+                        <td className="px-4 py-2.5 text-center font-medium text-[#64748B]">
+                          #{batch.id}
+                        </td>
 
-                      {/* PREPARED BY */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
-                        {batch.preparedBy
-                          ? `${batch.preparedBy.firstName} ${batch.preparedBy.lastName}`
-                          : "—"}
-                      </td>
+                        {/* PRODUCT */}
+                        <td className="px-4 py-2.5 font-semibold text-[#1F2937]">
+                          {batch.product
+                            ?.name ??
+                            "—"}
+                        </td>
 
-                      {/* STATUS */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
-                        <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            batch.status === "AVAILABLE"
-                              ? "bg-green-100 text-green-800"
-                              : batch.status === "LOW"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {batch.status}
-                        </span>
-                      </td>
+                        {/* PREPARED AT */}
+                        <td className="px-4 py-2.5 text-center text-[#64748B]">
+                          {new Date(
+                            batch.preparedAt
+                          ).toLocaleString(
+                            "en-US",
+                            {
+                              month:
+                                "short",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute:
+                                "2-digit",
+                            }
+                          )}
+                        </td>
 
-                      {/* BRANCH */}
-                      <td className="border-r border-gray-200 px-4 py-2.5 text-center">
-                        {batch.branch?.name ?? "—"}
-                      </td>
+                        {/* PREPARED BY */}
+                        <td className="px-4 py-2.5 text-center text-[#64748B]">
+                          {batch.preparedBy
+                            ? `${batch.preparedBy.firstName} ${batch.preparedBy.lastName}`
+                            : "—"}
+                        </td>
 
-                      {/* ACTIONS */}
-                      <td className="px-4 py-2.5 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            disabled={batch.status === "EMPTY"}
-                            className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                          >
-                            Mark Empty
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                        {/* STATUS */}
+                        <td className="px-4 py-2.5 text-center">
+                          <StatusBadge
+                            status={
+                              batch.status
+                            }
+                          />
+                        </td>
+
+                        {/* BRANCH */}
+                        <td className="px-4 py-2.5 text-center text-[#64748B]">
+                          {batch.branch
+                            ?.name ??
+                            "—"}
+                        </td>
+
+                        {/* ACTIONS */}
+                        <td className="px-4 py-2.5 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+
+                            <button
+                              type="button"
+                              disabled={
+                                batch.status ===
+                                "EMPTY"
+                              }
+                              className="rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[#1F2937] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              Mark Empty
+                            </button>
+
+                          </div>
+                        </td>
+
+                      </tr>
+                    )
+                  )
                 )}
+
               </tbody>
+
             </table>
+
           </div>
         </div>
       )}
 
-      {/* RAW INVENTORY PAGINATION */}
-      {activeTab === "RAW" && (
-        <div className="mt-4 flex items-center justify-between text-xs text-gray-600">
-
-        <span>
-          Page <strong>{page}</strong> of{" "}
-          <strong>{totalPages}</strong>
-        </span>
-
-        <div className="flex items-center gap-2">
-
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() =>
-              setPage((current) => current - 1)
-            }
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Previous
-          </button>
-
-          <button
-            type="button"
-            disabled={page >= totalPages}
-            onClick={() =>
-              setPage((current) => current + 1)
-            }
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next
-          </button>
-
-        </div>
-      </div>
-      )}
-
-      {/* FORM MODAL */}
+      {/* =====================================================
+          INVENTORY FORM MODAL
+      ====================================================== */}
 
       {showForm && (
         <InventoryForm

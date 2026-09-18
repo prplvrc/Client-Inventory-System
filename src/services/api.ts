@@ -1,39 +1,61 @@
 export const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3001/api";
 
 export const FORECAST_API_URL =
   import.meta.env.VITE_FORECAST_API_URL;
 
-export const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem("token");
+export const getToken = () =>
+  localStorage.getItem("token") ||
+  sessionStorage.getItem("token");
 
-  return {
-    "Content-Type": "application/json",
-    ...(token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : {}),
+export const getAuthHeaders =
+  (): HeadersInit => {
+    const token = getToken();
+
+    return {
+      "Content-Type": "application/json",
+      ...(token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {}),
+    };
   };
-};
 
 export async function apiRequest<T>(
   endpoint: string,
-  options?: RequestInit
+  options: RequestInit = {}
 ): Promise<T> {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      ...getAuthHeaders(),
-      ...options?.headers,
-    },
-  });
+  const response = await fetch(
+    `${API_URL}${endpoint}`,
+    {
+      ...options,
+      headers: {
+        ...getAuthHeaders(),
+        ...options.headers,
+      },
+    }
+  );
 
-  const data = await response.json();
+  const data = await response
+    .json()
+    .catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data.message || "Request failed");
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+    }
+
+    throw new Error(
+      data?.message ||
+      `Request failed (${response.status})`
+    );
   }
 
-  return data;
+  return data as T;
 }

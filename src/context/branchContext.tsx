@@ -12,7 +12,7 @@ import {
 } from "../hooks/useBranch";
 
 import { useAuth } from "../hooks/useAuth";
-import { API_URL } from "../services/api";
+import { apiRequest } from "../services/api";
 
 interface BranchResponse {
   data: Branch[];
@@ -48,18 +48,10 @@ export function BranchProvider({
       try {
         setLoadingBranches(true);
 
-        const response = await fetch(
-          `${API_URL}/branches`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to fetch branches"
+        const result =
+          await apiRequest<BranchResponse>(
+            "/branches"
           );
-        }
-
-        const result: BranchResponse =
-          await response.json();
 
         setBranches(result.data ?? []);
       } catch (error) {

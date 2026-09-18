@@ -3,9 +3,10 @@ import {
   AlertTriangle,
   Info,
 } from "lucide-react";
+
 import { Skeleton, TableSkeleton } from "./LoadingSkeleton";
 import { FORECAST_API_URL } from "../services/api";
-
+import PageHeader from "./ui/PageHeader";
 import { useBranch } from "../hooks/useBranch";
 
 interface ResourcePlanning {
@@ -44,7 +45,6 @@ interface RecommendationData {
 
 function Recommendation() {
   const { selectedBranchId } = useBranch();
-  const [dateTime, setDateTime] = useState(new Date());
 
   const [recommendations, setRecommendations] =
     useState<RecommendationData | null>(null);
@@ -53,26 +53,21 @@ function Recommendation() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setDateTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
     const fetchRecommendations = async () => {
       try {
         setLoading(true);
         setError("");
 
+        // Recommendations require a specific branch.
         if (selectedBranchId === "ALL") {
           setRecommendations(null);
           return;
         }
 
         if (!FORECAST_API_URL) {
-          throw new Error("VITE_FORECAST_API_URL is not configured.");
+          throw new Error(
+            "VITE_FORECAST_API_URL is not configured."
+          );
         }
 
         const params = new URLSearchParams();
@@ -87,14 +82,27 @@ function Recommendation() {
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch recommendations.");
+          throw new Error(
+            "Failed to fetch recommendations."
+          );
         }
 
-        const data: RecommendationData = await response.json();
+        const data: RecommendationData =
+          await response.json();
+
         setRecommendations(data);
       } catch (err) {
-        console.error("Error fetching recommendations:", err);
-        setError("Unable to load recommendations.");
+        console.error(
+          "Error fetching recommendations:",
+          err
+        );
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load recommendations."
+        );
+
         setRecommendations(null);
       } finally {
         setLoading(false);
@@ -103,254 +111,424 @@ function Recommendation() {
 
     fetchRecommendations();
   }, [selectedBranchId]);
-  
+
   return (
     <div className="w-full p-4 sm:p-6">
-      {/* HEADER */}
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="pl-12 lg:pl-0">
-          <h1 className="text-xl font-bold uppercase tracking-tight text-gray-900">
-            Recommendation
-          </h1>
 
-          <p className="text-xs text-gray-500">
-            View inventory, restocking, and preparation insights.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4 text-xs font-medium text-gray-600">
-          <span>
-            DATE:{" "}
-            {dateTime.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>
-
-          <span>
-            TIME:{" "}
-            {dateTime.toLocaleTimeString("en-US", {
-              hour12: false,
-            })}
-          </span>
-        </div>
-      </div>
+      {/* PAGE HEADER */}
+      <PageHeader
+        title="Recommendation"
+        description="View inventory, restocking, and preparation insights."
+      />
 
       {/* ERROR */}
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
           {error}
         </div>
       )}
 
-      {/* Resource Planning & Alerts */}
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Resource Planning */}
-        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
-            Resource Planning
-          </div>
+      {/* ALL BRANCHES MESSAGE */}
+      {selectedBranchId === "ALL" && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+          Select Branch 1 or Branch 2 to view recommendations.
+        </div>
+      )}
+
+      {/* RESOURCE PLANNING + ALERTS */}
+      <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+        {/* RESOURCE PLANNING */}
+        <section className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+
+          <SectionHeader title="Resource Planning" />
 
           <div className="p-4">
+
             {loading ? (
               <ResourcePlanningSkeleton />
             ) : recommendations?.resourcePlanning?.length ? (
+
               <div className="space-y-2.5">
-                {recommendations.resourcePlanning.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-2.5 rounded-md border border-gray-200 bg-gray-50/50 p-3 text-xs text-gray-700"
-                  >
-                    <Info size={15} className="mt-0.5 shrink-0 text-blue-500" />
-                    <span>{item.message}</span>
-                  </div>
-                ))}
+
+                {recommendations.resourcePlanning.map(
+                  (item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start gap-2.5 rounded-lg border border-[#E5E7EB] bg-[#F8F7F2]/60 p-3"
+                    >
+                      <Info
+                        size={15}
+                        className="mt-0.5 shrink-0 text-blue-500"
+                        aria-hidden="true"
+                      />
+
+                      <span className="text-xs leading-5 text-[#1F2937]">
+                        {item.message}
+                      </span>
+                    </div>
+                  )
+                )}
+
               </div>
+
             ) : (
-              <div className="flex h-44 items-center justify-center text-xs text-gray-500">
+
+              <div className="flex h-44 items-center justify-center text-xs text-[#64748B]">
                 No resource planning recommendations available.
               </div>
+
             )}
+
           </div>
         </section>
 
-        {/* Alerts */}
-        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
-            Alerts
-          </div>
+        {/* ALERTS */}
+        <section className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+
+          <SectionHeader title="Alerts" />
 
           <div className="p-4">
+
             {loading ? (
               <AlertsSkeleton />
             ) : recommendations?.alerts?.length ? (
-              <div className="space-y-2.5">
-                {recommendations.alerts.map((alert) => (
-                  <div
-                    key={alert.id}
-                    className={`flex items-start justify-between gap-3 rounded-md border p-3 text-xs ${
-                      alert.severity === "high"
-                        ? "border-red-200 bg-red-50/60 text-red-800"
-                        : alert.severity === "medium"
-                        ? "border-amber-200 bg-amber-50/60 text-amber-800"
-                        : "border-blue-200 bg-blue-50/60 text-blue-800"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-                      <span>{alert.message}</span>
-                    </div>
 
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                        alert.severity === "high"
-                          ? "bg-red-200 text-red-900"
-                          : alert.severity === "medium"
-                          ? "bg-amber-200 text-amber-900"
-                          : "bg-blue-200 text-blue-900"
-                      }`}
-                    >
-                      {alert.severity}
-                    </span>
-                  </div>
-                ))}
+              <div className="space-y-2.5">
+
+                {recommendations.alerts.map(
+                  (alert) => {
+                    const alertStyles =
+                      alert.severity === "high"
+                        ? "border-red-200 bg-red-50/70 text-red-800"
+                        : alert.severity === "medium"
+                        ? "border-amber-200 bg-amber-50/70 text-amber-800"
+                        : "border-blue-200 bg-blue-50/70 text-blue-800";
+
+                    const badgeStyles =
+                      alert.severity === "high"
+                        ? "bg-red-100 text-red-700"
+                        : alert.severity === "medium"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-blue-100 text-blue-700";
+
+                    return (
+                      <div
+                        key={alert.id}
+                        className={`flex items-start justify-between gap-3 rounded-lg border p-3 text-xs ${alertStyles}`}
+                      >
+
+                        <div className="flex min-w-0 items-start gap-2">
+
+                          <AlertTriangle
+                            size={15}
+                            className="mt-0.5 shrink-0"
+                            aria-hidden="true"
+                          />
+
+                          <span className="leading-5">
+                            {alert.message}
+                          </span>
+
+                        </div>
+
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold uppercase ${badgeStyles}`}
+                        >
+                          {alert.severity}
+                        </span>
+
+                      </div>
+                    );
+                  }
+                )}
+
               </div>
+
             ) : (
-              <div className="flex h-44 items-center justify-center text-xs text-gray-500">
+
+              <div className="flex h-44 items-center justify-center text-xs text-[#64748B]">
                 No alerts available.
               </div>
+
             )}
+
           </div>
         </section>
+
       </div>
 
-      {/* Restocking Recommendation */}
-      <section className="mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
-          Restocking Recommendation
-        </div>
+      {/* RESTOCKING RECOMMENDATION */}
+      <section className="mb-5 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+
+        <SectionHeader title="Restocking Recommendation" />
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-gray-700 border-collapse">
-            <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
+
+          <table className="w-full border-collapse text-left text-xs text-[#1F2937]">
+
+            <thead className="border-b border-[#E5E7EB] bg-[#F8F7F2] text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+
               <tr>
-                <th className="px-4 py-2.5 text-center border-r border-gray-200">Ingredient</th>
-                <th className="px-4 py-2.5 text-center border-r border-gray-200">Current Stock</th>
-                <th className="px-4 py-2.5 text-center border-r border-gray-200">Recommended Stock</th>
-                <th className="px-4 py-2.5 text-center">Restock</th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3">
+                  Ingredient
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Current Stock
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Recommended Stock
+                </th>
+
+                <th className="px-4 py-3 text-center">
+                  Restock
+                </th>
+
               </tr>
+
             </thead>
 
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-[#E5E7EB]">
+
               {loading ? (
-                <TableSkeleton columns={4} rows={4} />
+
+                <TableSkeleton
+                  columns={4}
+                  rows={4}
+                />
+
               ) : recommendations?.restocking?.length ? (
-                recommendations.restocking.map((item) => (
-                  <tr key={item.id} className="transition hover:bg-gray-50/80">
-                    <td className="px-4 py-2.5 font-semibold text-gray-900 border-r border-gray-200">
-                      {item.ingredient}
-                    </td>
 
-                    <td className="px-4 py-2.5 text-center text-gray-600 border-r border-gray-200">
-                      {item.currentStock} {item.unit}
-                    </td>
+                recommendations.restocking.map(
+                  (item) => (
+                    <tr
+                      key={item.id}
+                      className="transition hover:bg-[#F8F7F2]/70"
+                    >
 
-                    <td className="px-4 py-2.5 text-center text-gray-600 border-r border-gray-200">
-                      {item.recommendedStock} {item.unit}
-                    </td>
+                      <td className="border-r border-[#E5E7EB] px-4 py-3 font-semibold text-[#1F2937]">
+                        {item.ingredient}
+                      </td>
 
-                    <td className="px-4 py-2.5 text-center font-bold text-gray-900">
-                      {item.quantity} {item.unit}
-                    </td>
-                  </tr>
-                ))
+                      <td className="border-r border-[#E5E7EB] px-4 py-3 text-center text-[#64748B]">
+                        {item.currentStock}{" "}
+                        {item.unit}
+                      </td>
+
+                      <td className="border-r border-[#E5E7EB] px-4 py-3 text-center text-[#64748B]">
+                        {item.recommendedStock}{" "}
+                        {item.unit}
+                      </td>
+
+                      <td className="px-4 py-3 text-center font-semibold text-[#1F2937]">
+                        {item.quantity}{" "}
+                        {item.unit}
+                      </td>
+
+                    </tr>
+                  )
+                )
+
               ) : (
+
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-xs text-gray-500">
+                  <td
+                    colSpan={4}
+                    className="px-4 py-12 text-center text-xs text-[#64748B]"
+                  >
                     No restocking recommendations available.
                   </td>
                 </tr>
+
               )}
+
             </tbody>
           </table>
+
         </div>
       </section>
 
-      {/* Preparation Recommendation */}
-      <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-xs font-bold uppercase tracking-wider text-gray-700">
-          Preparation Recommendation
-        </div>
+      {/* PREPARATION RECOMMENDATION */}
+      <section className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+
+        <SectionHeader title="Preparation Recommendation" />
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-gray-700 border-collapse">
-            <thead className="border-b border-gray-200 bg-gray-100/70 font-semibold uppercase tracking-wider text-gray-700">
+
+          <table className="w-full border-collapse text-left text-xs text-[#1F2937]">
+
+            <thead className="border-b border-[#E5E7EB] bg-[#F8F7F2] text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+
               <tr>
-                <th className="px-4 py-2.5 text-center border-r border-gray-200">Product</th>
-                <th className="px-4 py-2.5 text-center border-r border-gray-200">Forecasted Demand</th>
-                <th className="px-4 py-2.5 text-center">Recommended Preparation</th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3">
+                  Product
+                </th>
+
+                <th className="border-r border-[#E5E7EB] px-4 py-3 text-center">
+                  Forecasted Demand
+                </th>
+
+                <th className="px-4 py-3 text-center">
+                  Recommended Preparation
+                </th>
+
               </tr>
+
             </thead>
 
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-[#E5E7EB]">
+
               {loading ? (
-                <TableSkeleton columns={3} rows={4} />
+
+                <TableSkeleton
+                  columns={3}
+                  rows={4}
+                />
+
               ) : recommendations?.preparation?.length ? (
-                recommendations.preparation.map((item) => (
-                  <tr key={item.id} className="transition hover:bg-gray-50/80">
-                    <td className="px-4 py-2.5 font-semibold text-gray-900 border-r border-gray-200">
-                      {item.product}
-                    </td>
 
-                    <td className="px-4 py-2.5 text-center text-gray-600 border-r border-gray-200">
-                      {item.forecastedDemand} {item.unit}
-                    </td>
+                recommendations.preparation.map(
+                  (item) => (
+                    <tr
+                      key={item.id}
+                      className="transition hover:bg-[#F8F7F2]/70"
+                    >
 
-                    <td className="px-4 py-2.5 text-center font-bold text-gray-900">
-                      {item.recommendedPreparation} {item.unit}
-                    </td>
-                  </tr>
-                ))
+                      <td className="border-r border-[#E5E7EB] px-4 py-3 font-semibold text-[#1F2937]">
+                        {item.product}
+                      </td>
+
+                      <td className="border-r border-[#E5E7EB] px-4 py-3 text-center text-[#64748B]">
+                        {item.forecastedDemand}{" "}
+                        {item.unit}
+                      </td>
+
+                      <td className="px-4 py-3 text-center font-semibold text-[#1F2937]">
+                        {item.recommendedPreparation}{" "}
+                        {item.unit}
+                      </td>
+
+                    </tr>
+                  )
+                )
+
               ) : (
+
                 <tr>
-                  <td colSpan={3} className="py-12 text-center text-xs text-gray-500">
+                  <td
+                    colSpan={3}
+                    className="px-4 py-12 text-center text-xs text-[#64748B]"
+                  >
                     No preparation recommendations available.
                   </td>
                 </tr>
+
               )}
+
             </tbody>
           </table>
+
         </div>
       </section>
+
     </div>
   );
 }
+
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+function SectionHeader({
+  title,
+}: {
+  title: string;
+}) {
+  return (
+    <div className="border-b border-[#E5E7EB] bg-[#F8F7F2] px-4 py-3">
+      <h2 className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+/* =========================================================
+   RESOURCE PLANNING SKELETON
+========================================================= */
 
 function ResourcePlanningSkeleton() {
   return (
     <div className="space-y-2.5" role="status">
-      {Array.from({ length: 3 }, (_, index) => (
-        <div key={index} className="flex items-start gap-2.5 rounded-md border border-gray-100 bg-gray-50/70 p-3">
-          <Skeleton className="mt-0.5 h-4 w-4 shrink-0 rounded-full" />
-          <div className="flex-1 space-y-2"><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-3/4" /></div>
-        </div>
-      ))}
-      <span className="sr-only">Loading resource planning recommendations...</span>
+
+      {Array.from(
+        { length: 3 },
+        (_, index) => (
+          <div
+            key={index}
+            className="flex items-start gap-2.5 rounded-lg border border-[#E5E7EB] bg-[#F8F7F2]/60 p-3"
+          >
+            <Skeleton
+              className="mt-0.5 h-4 w-4 shrink-0 rounded-full"
+            />
+
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-3/4" />
+            </div>
+          </div>
+        )
+      )}
+
+      <span className="sr-only">
+        Loading resource planning recommendations...
+      </span>
     </div>
   );
 }
 
+/* =========================================================
+   ALERTS SKELETON
+========================================================= */
+
 function AlertsSkeleton() {
   return (
     <div className="space-y-2.5" role="status">
-      {Array.from({ length: 3 }, (_, index) => (
-        <div key={index} className="flex items-start justify-between gap-3 rounded-md border border-gray-100 bg-gray-50/70 p-3">
-          <div className="flex flex-1 items-start gap-2"><Skeleton className="mt-0.5 h-4 w-4 shrink-0 rounded-full" /><div className="flex-1 space-y-2"><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-2/3" /></div></div>
-          <Skeleton className="h-4 w-10 shrink-0 rounded-full" />
-        </div>
-      ))}
-      <span className="sr-only">Loading alerts...</span>
+
+      {Array.from(
+        { length: 3 },
+        (_, index) => (
+          <div
+            key={index}
+            className="flex items-start justify-between gap-3 rounded-lg border border-[#E5E7EB] bg-[#F8F7F2]/60 p-3"
+          >
+
+            <div className="flex flex-1 items-start gap-2">
+
+              <Skeleton
+                className="mt-0.5 h-4 w-4 shrink-0 rounded-full"
+              />
+
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+
+            </div>
+
+            <Skeleton className="h-5 w-12 shrink-0 rounded-full" />
+
+          </div>
+        )
+      )}
+
+      <span className="sr-only">
+        Loading alerts...
+      </span>
     </div>
   );
 }
